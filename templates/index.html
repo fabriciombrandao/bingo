@@ -5965,6 +5965,12 @@ function carregarAuditoria(page) {
         <input type="text" id="mlpago-nome-pagador" placeholder="Nome de quem realizou o pagamento" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:0.9rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor=''">
       </div>
 
+      <!-- Histórico de pagamentos -->
+      <div id="mlpago-historico-wrap" style="display:none;">
+        <div style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Histórico de pagamentos</div>
+        <div id="mlpago-historico" style="background:var(--bg3);border-radius:8px;padding:8px;max-height:120px;overflow-y:auto;font-size:0.8rem;margin-bottom:4px;"></div>
+      </div>
+
       <!-- Aviso parcial -->
       <div id="mlpago-aviso-parcial" style="display:none;background:#f59e0b11;border:1px solid #f59e0b44;border-radius:8px;padding:10px 12px;font-size:0.82rem;color:#92400e;">
         ⚠️ Valor menor que o total — registro ficará como <b>Pgto. Parcial</b>
@@ -6090,13 +6096,14 @@ function carregarAuditoria(page) {
             <th style="padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;white-space:nowrap;cursor:pointer;" onclick="mlOrdenar('nome')">Nome ↕</th>
             <th style="padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;">Telefone</th>
             <th style="padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;">Valor</th>
+            <th style="padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;">Saldo</th>
             <th style="padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;white-space:nowrap;">Prev. Pgto</th>
             <th style="padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;">Status</th>
             <th style="padding:12px 14px;text-align:center;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;">Ações</th>
           </tr>
         </thead>
         <tbody id="ml-body">
-          <tr><td colspan="9" style="padding:40px;text-align:center;color:var(--text3);">⏳ Carregando...</td></tr>
+          <tr><td colspan="10" style="padding:40px;text-align:center;color:var(--text3);">⏳ Carregando...</td></tr>
         </tbody>
       </table>
     </div>
@@ -6603,6 +6610,28 @@ function mlAbrirPago(id) {
 
   document.getElementById('modal-ml-pago').style.display = 'flex';
   setTimeout(function(){ document.getElementById('mlpago-valor').focus(); document.getElementById('mlpago-valor').select(); }, 100);
+
+  // Carrega histórico de pagamentos
+  document.getElementById('mlpago-historico-wrap').style.display = 'none';
+  if (id) {
+    fetch('/api/contatos/' + id + '/pagamentos')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d.ok || !d.pagamentos || !d.pagamentos.length) return;
+        var hist = document.getElementById('mlpago-historico');
+        hist.innerHTML = d.pagamentos.map(function(p){
+          var val = 'R$ ' + parseFloat(p.valor).toFixed(2).replace('.',',');
+          return '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);">' +
+            '<span style="color:var(--text3);font-size:0.75rem;white-space:nowrap;">' + p.data_pagamento + '</span>' +
+            '<span style="color:var(--text3);">' + p.forma_pagamento + '</span>' +
+            '<span style="color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (p.recebido_por||'—') + '</span>' +
+            '<span style="font-weight:600;color:#22c55e;white-space:nowrap;">' + val + '</span>' +
+            '<button onclick="mlEstornarPagamento(' + p.id + ',' + id + ')" title="Estornar este pagamento" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:0.8rem;padding:1px 4px;flex-shrink:0;">↩</button>' +
+          '</div>';
+        }).join('');
+        document.getElementById('mlpago-historico-wrap').style.display = 'block';
+      });
+  }
 }
 
 function mlAbrirPagoLote(ids, callback) {
@@ -6628,16 +6657,13 @@ function mlPagoAtualizarAviso() {
   var totalNum = parseFloat(document.getElementById('mlpago-valor-total').value||'0') || 0;
   var avisoP = document.getElementById('mlpago-aviso-parcial');
   var avisoE = document.getElementById('mlpago-aviso-erro');
+  avisoP.style.display = 'none';
+  avisoE.style.display = 'none';
   if (saldoNum > 0 && valorNum > saldoNum) {
     avisoE.style.display = 'block';
     document.getElementById('mlpago-aviso-erro-txt').textContent = 'Valor não pode ser maior que o saldo devedor (R$ ' + saldoNum.toFixed(2).replace('.',',') + ')';
-    avisoP.style.display = 'none';
   } else if (totalNum > 0 && valorNum > 0 && valorNum < totalNum) {
     avisoP.style.display = 'block';
-    avisoE.style.display = 'none';
-  } else {
-    avisoP.style.display = 'none';
-    avisoE.style.display = 'none';
   }
 }
 
@@ -6704,6 +6730,26 @@ function confirmarMlPago() {
       }
     });
   }
+}
+
+function mlEstornarPagamento(pagamentoId, contatoId) {
+  if (!confirm('Confirma o estorno deste pagamento?')) return;
+  fetch('/api/pagamentos-parciais/' + pagamentoId + '/estornar', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'}
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.ok) {
+      // Recarrega o modal com dados atualizados
+      mlAbrirPago(contatoId);
+      mlCarregar();
+      if (typeof carregarGrid === 'function') carregarGrid();
+      atualizarCards();
+    } else {
+      alert('Erro: ' + (d.msg||'Não foi possível estornar'));
+    }
+  });
 }
 
 // ── PREVISÃO DE PAGAMENTO ─────────────────────────────────
@@ -7058,7 +7104,7 @@ function mlRenderizar() {
   }
 
   if (!mlFiltrados.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="padding:30px;text-align:center;color:var(--text3);">Nenhum registro encontrado</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:var(--text3);">Nenhum registro encontrado</td></tr>';
     mlAtualizarBarraAcoes();
     return;
   }
@@ -7111,6 +7157,15 @@ function mlRenderizar() {
       '<td style="padding:11px 14px;font-weight:500;">'+(r.nome||'-')+'</td>' +
       '<td style="padding:11px 14px;color:var(--text3);white-space:nowrap;">' + tel + (tel && tel !== '-' ? ' <a href="https://wa.me/55'+telLimpo+'" target="_blank" title="Abrir no WhatsApp Web" style="text-decoration:none;display:inline-block;vertical-align:middle;margin-left:4px;opacity:0.85;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.85"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#25D366"/><path fill="#fff" d="M23.5 8.5A10.4 10.4 0 0 0 16 5.4a10.6 10.6 0 0 0-9.1 15.9L5.4 26.6l5.5-1.4A10.6 10.6 0 0 0 26.6 16 10.4 10.4 0 0 0 23.5 8.5zm-7.5 16.3a8.8 8.8 0 0 1-4.5-1.2l-.3-.2-3.2.8.9-3.1-.2-.3a8.8 8.8 0 1 1 7.3 4zm4.8-6.6c-.3-.1-1.6-.8-1.8-.9s-.4-.1-.6.1-.7.9-.8 1.1-.3.2-.6 0a7.2 7.2 0 0 1-2.1-1.3 7.9 7.9 0 0 1-1.5-1.8c-.2-.3 0-.4.1-.6l.4-.5.3-.4v-.4l-.9-2.1c-.2-.5-.5-.5-.6-.5h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.5 4 5 5 0 0 0 3 .6 2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.6-.3z"/></svg></a>' : '') + (alertaInbox ? ' '+alertaInbox : '') + '</td>' +
       '<td style="padding:11px 14px;font-weight:500;">'+(r.valor||'-')+'</td>' +
+      (function(){
+        var st3 = (r.status||'').toLowerCase();
+        if (st3 === 'pgto. parcial' && r.saldo_devedor != null) {
+          var saldo = parseFloat(r.saldo_devedor) || 0;
+          var saldoFmt = 'R$ ' + saldo.toFixed(2).replace('.',',');
+          return '<td style="padding:11px 14px;font-weight:600;color:#f97316;">'+saldoFmt+'</td>';
+        }
+        return '<td style="padding:11px 14px;color:var(--text3);">—</td>';
+      })() +
       '<td style="padding:11px 14px;color:var(--text3);font-size:0.82rem;white-space:nowrap;">'+(r.previsao_pagamento ? r.previsao_pagamento.split('-').reverse().join('/') : '—')+'</td>' +
       '<td style="padding:11px 14px;">'+badgeStatus(r.status)+'</td>' +
       '<td style="padding:11px 14px;text-align:center;white-space:nowrap;">' + btnEnviar + btnPago + btnVincular +

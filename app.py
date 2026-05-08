@@ -1556,6 +1556,99 @@ def api_pagamento_parcial(cid):
 
 
 
+@app.route("/api/contatos/<int:cid>/pagamentos")
+@requer_login
+def api_pagamentos_contato(cid):
+    """Retorna histórico de pagamentos parciais de uma cartela."""
+    with get_db() as conn:
+        row = conn.execute("SELECT * FROM contatos WHERE id=?", (cid,)).fetchone()
+        if not row:
+            return jsonify({"ok": False, "msg": "Registro não encontrado"})
+        c = dict(row)
+        pagamentos = conn.execute(
+            "SELECT * FROM pagamentos_parciais WHERE contato_id=? ORDER BY id ASC", (cid,)
+        ).fetchall()
+        pagamentos = [dict(p) for p in pagamentos]
+    try:
+        valor_total = float(re.sub(r"[^\d,.]", "", str(c.get("valor") or "0")).replace(",", "."))
+    except:
+        valor_total = 0
+    valor_pago = float(c.get("valor_pago") or 0)
+    saldo = max(0, valor_total - valor_pago)
+    return jsonify({
+        "ok": True,
+        "contato": {
+            "id": c["id"], "lote": c.get("lote",""), "intervalo": c.get("intervalo",""),
+            "nome": c.get("nome",""), "valor": c.get("valor",""),
+            "valor_total": valor_total, "valor_pago": valor_pago,
+            "saldo_devedor": saldo, "status": c.get("status","")
+        },
+        "pagamentos": pagamentos
+    })
+
+
+@app.route("/api/pagamentos-parciais/<int:pid>/estornar", methods=["POST"])
+@requer_login
+def api_estornar_pagamento(pid):
+    """Estorna um pagamento parcial. Recalcula saldo e status do contato."""
+    with get_db() as conn:
+        pag = conn.execute("SELECT * FROM pagamentos_parciais WHERE id=?", (pid,)).fetchone()
+        if not pag:
+            return jsonify({"ok": False, "msg": "Pagamento não encontrado"})
+        pag = dict(pag)
+        cid = pag["contato_id"]
+
+        row = conn.execute("SELECT * FROM contatos WHERE id=?", (cid,)).fetchone()
+        if not row:
+            return jsonify({"ok": False, "msg": "Contato não encontrado"})
+        c = dict(row)
+
+        # Remove o pagamento
+        conn.execute("DELETE FROM pagamentos_parciais WHERE id=?", (pid,))
+
+        # Recalcula valor_pago somando os restantes
+        restantes = conn.execute(
+            "SELECT COALESCE(SUM(valor),0) as total FROM pagamentos_parciais WHERE contato_id=?", (cid,)
+        ).fetchone()
+        novo_valor_pago = float(restantes["total"] or 0)
+
+        try:
+            valor_total = float(re.sub(r"[^\d,.]", "", str(c.get("valor") or "0")).replace(",", "."))
+        except:
+            valor_total = 0
+
+        novo_saldo = max(0, valor_total - novo_valor_pago)
+
+        # Define novo status
+        if novo_valor_pago <= 0:
+            novo_status = "Pendente"
+        elif novo_valor_pago >= valor_total:
+            novo_status = "Pago"
+        else:
+            novo_status = "Pgto. Parcial"
+
+        now = datetime.now().strftime("%d/%m/%Y %H:%M")
+        conn.execute(
+            "UPDATE contatos SET status=?, valor_pago=?, saldo_devedor=?, atualizado_em=? WHERE id=?",
+            (novo_status, novo_valor_pago, novo_saldo, now, cid)
+        )
+
+    auditar("ESTORNO_PAGAMENTO", contato_id=cid,
+            lote=c["lote"], intervalo=c.get("intervalo",""),
+            nome=c.get("nome",""), telefone=c.get("telefone",""),
+            status_de=c.get("status",""), status_para=novo_status,
+            detalhes=f"Estorno do pagamento #{pid} de R$ {pag['valor']:.2f} | Novo saldo: R$ {novo_saldo:.2f}")
+
+    return jsonify({
+        "ok": True,
+        "msg": f"Pagamento estornado! Status voltou para {novo_status}.",
+        "novo_status": novo_status,
+        "valor_pago": novo_valor_pago,
+        "saldo_devedor": novo_saldo
+    })
+
+
+
 @app.route("/api/contatos/lotes")
 @requer_login
 def api_lotes():
