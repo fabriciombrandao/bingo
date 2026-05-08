@@ -6779,7 +6779,8 @@ function fecharModalEstorno() {
 }
 
 function confirmarEstorno() {
-  if (!_estornoId) return;
+  console.log('[ESTORNO] confirmarEstorno chamado, _estornoId=', _estornoId, '_estornoContatoId=', _estornoContatoId);
+  if (!_estornoId) { console.log('[ESTORNO] _estornoId é null, abortando'); return; }
   var motivo = document.getElementById('estorno-motivo').value.trim();
   if (!motivo) {
     document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">⚠️ Informe o motivo do estorno</span>';
@@ -6788,6 +6789,7 @@ function confirmarEstorno() {
   var btn = document.getElementById('estorno-btn');
   btn.disabled = true;
   btn.textContent = '⏳ Estornando...';
+  console.log('[ESTORNO] Enviando POST para /api/pagamentos-parciais/' + _estornoId + '/estornar');
 
   fetch('/api/pagamentos-parciais/' + _estornoId + '/estornar', {
     method: 'POST',
@@ -6795,6 +6797,7 @@ function confirmarEstorno() {
     body: JSON.stringify({motivo: motivo})
   })
   .then(function(r){
+    console.log('[ESTORNO] Resposta recebida, status=', r.status, 'redirected=', r.redirected);
     if (r.status === 401 || r.redirected) {
       document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ Sessão expirada — faça login novamente</span>';
       btn.disabled = false;
@@ -6804,6 +6807,7 @@ function confirmarEstorno() {
     return r.json();
   })
   .then(function(d){
+    console.log('[ESTORNO] JSON recebido:', d);
     if (!d) return;
     if (d.ok) {
       var cid = _estornoContatoId;
