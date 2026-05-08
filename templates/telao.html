@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telão do Sorteio</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:#f8fafc;color:#0f172a;font-family:'Barlow',sans-serif;min-height:100vh;padding:14px;}
+  .layout{display:grid;grid-template-rows:auto 1fr;grid-template-columns:1fr 280px;gap:12px;min-height:calc(100vh - 28px);}
+  /* Header */
+  .header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:10px 18px;gap:12px;}
+  .header-logo{height:52px;max-width:140px;object-fit:contain;border-radius:6px;}
+  .header-titulo{font-size:1.2rem;font-weight:600;color:#0f172a;flex:1;text-align:center;}
+  .header-right{text-align:right;flex-shrink:0;}
+  .header-count-num{font-family:'Barlow Condensed',sans-serif;font-size:2.2rem;font-weight:700;color:#1e40af;line-height:1;}
+  .header-count-label{font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:#94a3b8;}
+  /* Centro */
+  .centro{display:flex;flex-direction:column;gap:12px;}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px 16px;}
+  .card-label{font-size:0.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;}
+  /* Último número */
+  .ultimo-wrap{display:flex;align-items:center;gap:20px;}
+  .ultimo-ball{width:90px;height:90px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+  .ultimo-letra{font-size:1rem;font-weight:600;line-height:1;margin-bottom:-4px;}
+  .ultimo-num{font-family:'Barlow Condensed',sans-serif;font-size:3rem;font-weight:800;line-height:1.1;}
+  /* Números chamados em grade */
+  .numeros-grid{display:flex;flex-wrap:wrap;gap:5px;}
+  .num-ball{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.82rem;font-weight:600;}
+  /* Painel direito */
+  .painel{display:flex;flex-direction:column;gap:10px;}
+  .foto-box{width:100%;height:110px;object-fit:cover;border-radius:8px;margin-bottom:8px;}
+  .foto-ph{width:100%;height:110px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.75rem;margin-bottom:8px;}
+  .premio-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;border:1px solid #f1f5f9;margin-bottom:4px;}
+  .premio-item.ativo{background:#eff6ff;border-color:#bfdbfe;}
+  .premio-item.enc{opacity:0.4;}
+  .premio-num{width:20px;height:20px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:#64748b;flex-shrink:0;}
+  .premio-item.ativo .premio-num{background:#1e40af;color:#fff;}
+  .ganhador-item{padding:8px;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0;margin-bottom:5px;}
+  /* Pausado */
+  .pausado-bar{grid-column:1/-1;background:#f97316;border-radius:12px;padding:22px;text-align:center;font-weight:700;color:#fff;font-size:2.2rem;letter-spacing:2px;display:none;animation:pulse-bar 1.5s ease-in-out infinite;}
+  @keyframes pulse-bar{0%,100%{opacity:1}50%{opacity:0.7}}
+  /* Overlay novo número */
+  .overlay{position:fixed;inset:0;background:rgba(248,250,252,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.3s;gap:10px;}
+  .overlay.show{opacity:1;}
+  .overlay-label{font-size:0.65rem;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#94a3b8;}
+  .overlay-ball{width:220px;height:220px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1);}
+  @keyframes pop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+  .overlay-letra{font-size:2.5rem;font-weight:700;line-height:1;margin-bottom:-8px;}
+  .overlay-num{font-family:'Barlow Condensed',sans-serif;font-size:8rem;font-weight:800;line-height:1;}
+  /* Overlay ganhador */
+  .overlay-ganhador{position:fixed;inset:0;background:rgba(240,253,244,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.3s;gap:16px;}
+  .overlay-ganhador.show{opacity:1;}
+  .trophy{font-size:5rem;animation:bounce 0.6s ease;}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-20px)}}
+  .ganhador-nome-big{font-family:'Barlow Condensed',sans-serif;font-size:4rem;font-weight:800;color:#15803d;text-align:center;}
+  .ganhador-info-big{font-size:1.2rem;color:#166534;text-align:center;}
+</style>
+</head>
+<body>
+<div class="layout" id="layout">
+  <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;">
+    <div style="text-align:center;color:#94a3b8;">
+      <div style="font-size:2.5rem;margin-bottom:8px;">🎱</div>
+      <div style="font-size:1rem;font-weight:500;">Carregando sorteio...</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-num">
+  <div class="overlay-label">Novo número</div>
+  <div class="overlay-ball" id="overlay-ball">
+    <span class="overlay-letra" id="overlay-letra"></span>
+    <span class="overlay-num" id="overlay-num-val"></span>
+  </div>
+</div>
+
+<div class="overlay-ganhador" id="overlay-ganhador">
+  <div class="trophy">🏆</div>
+  <div class="ganhador-nome-big" id="overlay-ganhador-nome">Ganhador!</div>
+  <div class="ganhador-info-big" id="overlay-ganhador-info"></div>
+</div>
+
+<script>
+var SORTEIO_ID = {{ sorteio_id }};
+var _ultimo_count = 0;
+var _ultimo_ganhador_count = 0;
+var _overlay_timer = null;
+var _ganhador_timer = null;
+
+var COLS = {
+  B:{min:1,max:15,bg:'#3b82f6',text:'#fff'},
+  I:{min:16,max:30,bg:'#ec4899',text:'#fff'},
+  N:{min:31,max:45,bg:'#eab308',text:'#0f172a'},
+  G:{min:46,max:60,bg:'#22c55e',text:'#fff'},
+  O:{min:61,max:75,bg:'#f97316',text:'#fff'}
+};
+
+function getLetra(n) {
+  for (var l in COLS) if (n>=COLS[l].min && n<=COLS[l].max) return l;
+  return 'B';
+}
+
+function tipoLabel(t) {
+  return {'cartela_cheia':'Cartela Cheia','linha_h':'Linha Horizontal','linha_v':'Linha Vertical','diagonal':'Diagonal','quatro_cantos':'Quatro Cantos'}[t]||t;
+}
+
+function mostrarNumero(num) {
+  var l = getLetra(num); var c = COLS[l];
+  var ball = document.getElementById('overlay-ball');
+  ball.style.background = c.bg;
+  document.getElementById('overlay-letra').textContent = l;
+  document.getElementById('overlay-letra').style.color = c.text;
+  document.getElementById('overlay-num-val').textContent = num;
+  document.getElementById('overlay-num-val').style.color = c.text;
+  var ov = document.getElementById('overlay-num');
+  ov.classList.add('show');
+  clearTimeout(_overlay_timer);
+  _overlay_timer = setTimeout(function(){ ov.classList.remove('show'); }, 2500);
+}
+
+function mostrarGanhador(nome, info) {
+  document.getElementById('overlay-ganhador-nome').textContent = nome;
+  document.getElementById('overlay-ganhador-info').textContent = info;
+  var ov = document.getElementById('overlay-ganhador');
+  ov.classList.add('show');
+  clearTimeout(_ganhador_timer);
+  _ganhador_timer = setTimeout(function(){ ov.classList.remove('show'); }, 5000);
+}
+
+function renderizar(d) {
+  var numeros = d.numeros||[];
+  var premios = d.premios||[];
+  var ganhadores = d.ganhadores||[];
+  var ultimo = d.ultimo_numero;
+  var premioAt = d.premio_atual;
+  var sorteio = d.sorteio||{};
+  var pausado = d.pausado;
+
+  // Detecta novo número
+  if (_ultimo_count>0 && numeros.length>_ultimo_count && ultimo) mostrarNumero(ultimo);
+  _ultimo_count = numeros.length;
+
+  // Detecta novo ganhador
+  if (_ultimo_ganhador_count>0 && ganhadores.length>_ultimo_ganhador_count) {
+    var g = ganhadores[ganhadores.length-1];
+    mostrarGanhador(g.nome_ganhador||'Ganhador!', g.premio_nome+' · Cartela '+(g.numero_cartela||'—'));
+  }
+  _ultimo_ganhador_count = ganhadores.length;
+
+  var numSet = new Set(numeros);
+  var ul = ultimo ? getLetra(ultimo) : null;
+  var uc = ul ? COLS[ul] : null;
+
+  var html = '';
+
+  // Header
+  html += '<div class="header">';
+  if (sorteio.tem_logo) {
+    html += '<img class="header-logo" src="/api/sorteio/'+SORTEIO_ID+'/logo" onerror="this.style.display=\'none\'">';
+  }
+  html += '<div class="header-titulo">🎱 '+(sorteio.nome||'Bingo')+'</div>';
+  html += '<div class="header-right"><div class="header-count-num">'+numeros.length+'</div><div class="header-count-label">números</div></div>';
+  html += '</div>';
+
+  // Barra pausado
+  html += '<div class="pausado-bar" id="pausado-bar" style="'+(pausado?'display:block':'display:none')+'">🔍 VERIFICANDO POSSÍVEL GANHADOR — Aguarde...</div>';
+
+  // Centro
+  html += '<div class="centro">';
+
+  // Prêmio atual
+  html += '<div class="card" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#bfdbfe;">' +
+    '<div style="font-size:0.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#3b82f6;margin-bottom:4px;">Prêmio em Disputa</div>' +
+    '<div style="font-size:1.2rem;font-weight:700;color:#1e40af;">'+(premioAt?premioAt.nome:'— Todos encerrados —')+'</div>' +
+    (premioAt?'<div style="font-size:0.75rem;color:#3b82f6;margin-top:2px;">'+tipoLabel(premioAt.tipo_batida)+(premioAt.cartela_intervalo?' · Cartela '+premioAt.cartela_intervalo:'')+'</div>':'') +
+  '</div>';
+
+  // Último + anteriores
+  html += '<div class="card"><div class="ultimo-wrap">';
+  if (ultimo && uc) {
+    html += '<div>' +
+      '<div class="card-label">Último</div>' +
+      '<div class="ultimo-ball" style="background:'+uc.bg+'">' +
+        '<span class="ultimo-letra" style="color:'+uc.text+'">'+ul+'</span>' +
+        '<span class="ultimo-num" style="color:'+uc.text+'">'+ultimo+'</span>' +
+      '</div></div>';
+  }
+  html += '<div style="flex:1"><div class="card-label">Números Chamados ('+numeros.length+')</div>';
+  html += '<div class="numeros-grid">';
+  // Mostra últimos 40 em ordem reversa
+  numeros.slice().reverse().slice(0,40).forEach(function(n) {
+    var l = getLetra(n); var c = COLS[l];
+    var isUlt = n===ultimo;
+    html += '<div class="num-ball" style="background:'+c.bg+';color:'+c.text+';'+(isUlt?'box-shadow:0 0 0 3px #1e40af;transform:scale(1.15);':'')+'">'+n+'</div>';
+  });
+  if (numeros.length>40) html += '<span style="font-size:0.75rem;color:#94a3b8;align-self:center;">+'.concat(numeros.length-40, ' mais</span>');
+  html += '</div></div></div></div>';
+
+  html += '</div>'; // fim centro
+
+  // Painel direito
+  html += '<div class="painel">';
+
+  // Foto prêmio atual
+  html += '<div class="card">';
+  if (premioAt && premioAt.foto_url) {
+    html += '<img class="foto-box" src="'+premioAt.foto_url+'" onerror="this.style.display=\'none\'">';
+  } else {
+    html += '<div class="foto-ph">📷 foto do prêmio</div>';
+  }
+  html += '<div style="font-size:0.88rem;font-weight:600;color:#0f172a;">'+(premioAt?premioAt.nome:'—')+'</div>';
+  if (premioAt) html += '<div style="font-size:0.72rem;color:#64748b;">'+tipoLabel(premioAt.tipo_batida)+'</div>';
+  html += '</div>';
+
+  // Prêmios
+  html += '<div class="card"><div class="card-label">Prêmios</div>';
+  premios.forEach(function(p) {
+    var enc = p.status==='encerrado'; var at = p.status==='em_andamento';
+    html += '<div class="premio-item'+(at?' ativo':enc?' enc':'')+'">'+
+      '<div class="premio-num">'+p.ordem+'</div>'+
+      '<div style="flex:1"><div style="font-size:0.8rem;font-weight:600;color:#0f172a;">'+p.nome+'</div>'+
+      '<div style="font-size:0.65rem;color:#94a3b8;">'+tipoLabel(p.tipo_batida)+'</div></div>'+
+      '<span style="font-size:0.85rem;">'+(enc?'✅':at?'🎯':'⏳')+'</span>'+
+    '</div>';
+  });
+  html += '</div>';
+
+  // Ganhadores
+  if (ganhadores.length) {
+    html += '<div class="card"><div class="card-label">Ganhadores</div>';
+    ganhadores.forEach(function(g) {
+      html += '<div class="ganhador-item">'+
+        '<div style="font-size:0.82rem;font-weight:600;color:#16a34a;">🥇 '+(g.nome_ganhador||'—')+'</div>'+
+        '<div style="font-size:0.7rem;color:#64748b;">'+g.premio_nome+' · Cartela '+(g.numero_cartela||'—')+'</div>'+
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div>'; // fim painel
+
+  document.getElementById('layout').innerHTML = html;
+  var pb = document.getElementById('pausado-bar');
+  if (pb) pb.style.display = pausado ? 'block' : 'none';
+}
+
+function atualizar() {
+  fetch('/api/sorteio/'+SORTEIO_ID+'/estado')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.ok) renderizar(d); })
+    .catch(function(){})
+    .finally(function(){ setTimeout(atualizar, 2000); });
+}
+
+atualizar();
+</script>
+</body>
+</html>

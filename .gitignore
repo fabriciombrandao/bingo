@@ -1,0 +1,28 @@
+# Ambiente virtual
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Banco de dados (dados reais)
+bingo.db
+bingo.db-wal
+bingo.db-shm
+
+# Arquivos sensíveis
+config.json
+credenciais_google.json
+usuarios.json
+inbox.json
+.flask_secret
+
+# Logs e relatórios
+log_atividades.json
+relatorios/
+
+# QR Codes gerados
+static/qrcodes/
+
+# Uploads temporários
+*.tmp
+*.bak

@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadastro de Contatos — Bingo v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #f4f6fa;
+  --bg2:       #ffffff;
+  --bg3:       #eef1f7;
+  --bg4:       #e4e9f4;
+  --border:    #e2e6f0;
+  --border2:   #cdd4e8;
+  --text1:     #0f172a;
+  --text2:     #4a5578;
+  --text3:     #8896b3;
+  --blue:      #2563eb;
+  --blue2:     #1d4ed8;
+  --green:     #059669;
+  --green2:    #047857;
+  --orange:    #d97706;
+  --red:       #e11d48;
+  --purple:    #7c3aed;
+  --radius:    12px;
+  --shadow:    0 1px 4px rgba(15,23,42,0.07), 0 4px 16px rgba(15,23,42,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.3px;
+}
+.topbar-brand span { font-size: 1.4rem; }
+.topbar-nav { display: flex; gap: 4px; }
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  padding: 6px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-btn:hover { background: var(--bg3); color: var(--text1); }
+.nav-btn.active { background: var(--bg4); color: var(--blue); }
+
+/* ── LAYOUT ── */
+.main {
+  flex: 1;
+  padding: 28px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── HEADER DA PÁGINA ── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.page-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-title small {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text3);
+  background: var(--bg3);
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+}
+
+/* ── STATS ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-icon {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.stat-icon.blue   { background: #2563eb18; }
+.stat-icon.green  { background: #05966918; }
+.stat-icon.orange { background: #d9770618; }
+.stat-icon.purple { background: #7c3aed18; }
+.stat-label { font-size: 0.73rem; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-value { font-size: 1.6rem; font-weight: 700; letter-spacing: -1px; line-height: 1; margin-top: 2px; }
+
+/* ── PAINEL PRINCIPAL ── */
+.panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.panel-title { font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+/* ── TOOLBAR ── */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+}
+.search-wrap input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text1);
+  padding: 7px 12px 7px 34px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.search-wrap input:focus { border-color: var(--blue); }
+.search-icon {
+  position: absolute;
+  left: 10px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+select.filter-sel {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text1);
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+select.filter-sel:focus { border-color: var(--blue); }
+
+/* ── BOTÕES ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: var(--blue2); }
+.btn-success { background: var(--green); color: #fff; }
+.btn-success:hover { background: var(--green2); color: #fff; }
+.btn-ghost { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg4); color: var(--text1); }
+.btn-danger { background: #fff1f2; color: var(--red); border: 1px solid #fecdd3; }
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-sm { padding: 4px 10px; font-size: 0.78rem; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── TABELA ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  background: var(--bg3);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+thead th:hover { color: var(--text1); }
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+tbody tr:hover { background: var(--bg3); }
+tbody td {
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+.td-nome { font-weight: 600; }
+.td-tel { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text2); }
+.td-actions { display: flex; gap: 4px; }
+.table-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+  font-size: 0.9rem;
+}
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.badge-pago      { background: #ecfdf5; color: var(--green);  border: 1px solid #a7f3d0; }
+.badge-pendente  { background: #fffbeb; color: var(--orange); border: 1px solid #fde68a; }
+.badge-disponivel{ background: #eff4ff; color: var(--blue);   border: 1px solid #bfcffe; }
+
+/* ── PAGINAÇÃO ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.pag-info { font-size: 0.78rem; color: var(--text3); }
+.pag-btns { display: flex; gap: 4px; }
+.pag-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  width: 32px; height: 32px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.1s;
+}
+.pag-btn:hover { background: var(--bg4); color: var(--text1); }
+.pag-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+.pag-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 28px;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: var(--shadow);
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+.modal-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.3px; }
+.modal-close {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.modal-close:hover { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* ── FORM ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-label { font-size: 0.78rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+.form-input, .form-select {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text1);
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.form-input:focus, .form-select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px #4f7cff15; }
+.form-input.error { border-color: var(--red); }
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── CHECKBOX ── */
+.chk { cursor: pointer; width: 16px; height: 16px; accent-color: var(--blue); }
+.barra-acoes {
+  background: var(--bg3);
+  border-top: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.83rem;
+  color: var(--text2);
+}
+
+/* ── TOAST ── */
+.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow);
+  animation: toastIn 0.3s ease;
+  min-width: 240px;
+  max-width: 340px;
+}
+.toast.success { border-color: #22d07a50; }
+.toast.error   { border-color: #ff5c5c50; }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── IMPORT ── */
+.import-drop {
+  border: 2px dashed var(--border2);
+  border-radius: 10px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text3);
+  font-size: 0.85rem;
+}
+.import-drop:hover { border-color: var(--blue); color: var(--text2); background: #4f7cff08; }
+.import-drop.drag  { border-color: var(--blue); background: #4f7cff12; }
+
+@media (max-width: 768px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .main { padding: 12px; }
+  .topbar { padding: 0 14px; }
+  .topbar-brand { font-size: 0.88rem; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .page-title { font-size: 1.1rem; }
+  .toolbar { flex-wrap: wrap; }
+  .search-wrap { max-width: 100%; min-width: 100%; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 560px; }
+  .modal { padding: 18px !important; }
+  .panel-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+
+@media (max-width: 480px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 1.3rem; }
+  .topbar-nav .nav-btn span { display: none; }
+  .page-title { font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <span>🎱</span>
+    Bingo WhatsApp <span style="font-size:0.7rem;background:var(--purple);color:#fff;padding:2px 8px;border-radius:99px;margin-left:4px;">v2</span>
+  </div>
+  <div class="topbar-nav">
+    <a href="/" class="nav-btn">🏠 Dashboard</a>
+    <a href="/cadastro" class="nav-btn active">👥 Cadastro</a>
+    <a href="/sair" class="nav-btn">⏏ Sair</a>
+    <span style="font-size:0.7rem;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:99px;padding:2px 10px;font-weight:600;letter-spacing:0.5px;margin-left:4px;">v2.4.1</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="page-title">
+      👥 Cadastro de Contatos
+      <small id="contador-total">—</small>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" onclick="abrirImportar()">📥 Importar</button>
+      <button class="btn btn-primary" onclick="abrirModal()">＋ Novo Contato</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon blue">👥</div>
+      <div><div class="stat-label">Total</div><div class="stat-value" id="stat-total">—</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">✅</div>
+      <div><div class="stat-label">Pagos</div><div class="stat-value" id="stat-pagos">—</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange">⏳</div>
+      <div><div class="stat-label">Pendentes</div><div class="stat-value" id="stat-pendentes">—</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">🔵</div>
+      <div><div class="stat-label">Disponíveis</div><div class="stat-value" id="stat-disponiveis">—</div></div>
+    </div>
+  </div>
+
+  <!-- PAINEL -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">📋 Contatos</div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="busca" placeholder="Buscar nome, lote, vendedor..." oninput="debuscaBusca()">
+        </div>
+        <select class="filter-sel" id="filtro-status" onchange="carregarContatos(1)">
+          <option value="">Todos os status</option>
+          <option value="Pago">✅ Pago</option>
+          <option value="Pendente">⏳ Pendente</option>
+          <option value="Disponivel">🔵 Disponível</option>
+        </select>
+        <select class="filter-sel" id="filtro-lote" onchange="carregarContatos(1)">
+          <option value="">Todos os lotes</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px;"><input type="checkbox" class="chk" id="chk-all" onchange="toggleAll(this)"></th>
+            <th onclick="sortBy('lote')">Lote ↕</th>
+            <th onclick="sortBy('nome')">Nome ↕</th>
+            <th>Intervalo</th>
+            <th>Vendedor</th>
+            <th>Telefone</th>
+            <th>Valor</th>
+            <th>Status</th>
+            <th>Último WA</th>
+            <th style="text-align:center;">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-body">
+          <tr><td colspan="10" class="table-empty">⏳ Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- BARRA DE AÇÕES -->
+    <div class="barra-acoes" id="barra-acoes" style="display:none;">
+      <span id="sel-count">0 selecionados</span>
+      <button class="btn btn-success btn-sm" onclick="marcarPagoSelecionados()">✅ Marcar como Pago</button>
+      <button class="btn btn-danger btn-sm" onclick="deletarSelecionados()">🗑 Excluir</button>
+      <button class="btn btn-ghost btn-sm" onclick="limparSelecao()">✕ Limpar seleção</button>
+    </div>
+
+    <!-- PAGINAÇÃO -->
+    <div class="pagination">
+      <div class="pag-info" id="pag-info">—</div>
+      <div class="pag-btns" id="pag-btns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO/EDITAR -->
+<div class="modal-overlay" id="modal-form">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-titulo">➕ Novo Contato</div>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <input type="hidden" id="f-id">
+      <!-- Linha 1: Lote + Intervalo -->
+      <div class="form-group">
+        <label class="form-label">Lote *</label>
+        <input type="text" class="form-input" id="f-lote" placeholder="Ex: 1, 2, 3...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Intervalo de Cartelas *</label>
+        <input type="text" class="form-input" id="f-intervalo" placeholder="Ex: 00001 a 00010">
+      </div>
+      <!-- Linha 2: Nome (largura total) -->
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label class="form-label">Nome <span style="font-weight:400;color:#8896b3;">(opcional)</span></label>
+        <input type="text" class="form-input" id="f-nome" placeholder="Nome completo">
+      </div>
+      <!-- Linha 3: Telefone + WhatsApp -->
+      <div class="form-group">
+        <label class="form-label">Telefone <span style="font-weight:400;color:#8896b3;">(opcional)</span></label>
+        <input type="text" class="form-input" id="f-telefone" placeholder="(63) 99999-0000"
+               oninput="var w=document.getElementById('f-whatsapp'); if(!w._editado) w.value=this.value;"
+               onblur="var w=document.getElementById('f-whatsapp'); if(!w._editado) w.value=this.value;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">WhatsApp</label>
+        <input type="text" class="form-input" id="f-whatsapp" placeholder="Igual ao telefone se vazio"
+               oninput="this._editado=this.value!==''&&this.value!==document.getElementById('f-telefone').value;"
+               onfocus="this._editado=true;">
+      </div>
+      <!-- Linha 4: Vendedor + Valor -->
+      <div class="form-group">
+        <label class="form-label">Vendedor</label>
+        <input type="text" class="form-input" id="f-vendedor" placeholder="Nome do vendedor">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor</label>
+        <input type="text" class="form-input" id="f-valor" placeholder="Ex: R$ 200,00">
+      </div>
+      <!-- Linha 5: Observações (largura total) -->
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label class="form-label">Observações</label>
+        <textarea class="form-input" id="f-observacoes" placeholder="Anotações sobre este contato..."
+                  style="resize:vertical;min-height:72px;font-family:inherit;font-size:0.88rem;"></textarea>
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar" onclick="salvarContato()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR -->
+<div class="modal-overlay" id="modal-importar">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📥 Importar Contatos</div>
+      <button class="modal-close" onclick="fecharImportar()">✕</button>
+    </div>
+    <p style="font-size:0.85rem;color:var(--text2);margin-bottom:16px;">
+      Cole um JSON com array de contatos ou faça upload de um arquivo .json exportado do sistema.
+    </p>
+    <div class="import-drop" id="import-drop" onclick="document.getElementById('import-file').click()"
+         ondrop="dropImport(event)" ondragover="event.preventDefault();this.classList.add('drag')"
+         ondragleave="this.classList.remove('drag')">
+      📂 Clique ou arraste um arquivo .json aqui
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="lerArquivoImport(this)">
+    </div>
+    <textarea id="import-json" placeholder='[{"nome":"João","telefone":"63999990000","lote":"1",...}]'
+      style="width:100%;height:120px;margin-top:12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:10px;font-family:DM Mono,monospace;font-size:0.78rem;outline:none;resize:vertical;"></textarea>
+    <div id="import-preview" style="font-size:0.78rem;color:var(--text3);margin-top:8px;"></div>
+    <div class="form-footer">
+      <button class="btn btn-ghost" onclick="fecharImportar()">Cancelar</button>
+      <button class="btn btn-primary" onclick="executarImport()">📥 Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+var paginaAtual = 1;
+var perPage = 50;
+var totalRegistros = 0;
+var sortCol = 'lote';
+var sortAsc = true;
+var selecionados = new Set();
+var debounceTimer = null;
+
+// ─── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  carregarStats();
+  carregarLotes();
+  carregarContatos(1);
+});
+
+function carregarStats() {
+  fetch('/api/dashboard').then(r=>r.json()).then(function(d) {
+    if (!d.ok) return;
+    document.getElementById('stat-total').textContent = d.total;
+    document.getElementById('stat-pagos').textContent = d.pagos;
+    document.getElementById('stat-pendentes').textContent = d.pendentes;
+    document.getElementById('stat-disponiveis').textContent = d.disponiveis;
+  });
+}
+
+function carregarLotes() {
+  fetch('/api/contatos/lotes').then(r=>r.json()).then(function(d) {
+    var sel = document.getElementById('filtro-lote');
+    var current = sel.value;
+    sel.innerHTML = '<option value="">Todos os lotes</option>';
+    (d.lotes||[]).forEach(function(l) {
+      sel.innerHTML += '<option value="'+l+'"'+(l===current?' selected':'')+'>Lote '+l+'</option>';
+    });
+  });
+}
+
+function debuscaBusca() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(function(){ carregarContatos(1); }, 350);
+}
+
+function carregarContatos(page) {
+  page = page || paginaAtual;
+  paginaAtual = page;
+  var busca  = document.getElementById('busca').value.trim();
+  var status = document.getElementById('filtro-status').value;
+  var lote   = document.getElementById('filtro-lote').value;
+  var url = '/api/contatos?page='+page+'&per='+perPage;
+  if (busca)  url += '&q='+encodeURIComponent(busca);
+  if (status) url += '&status='+encodeURIComponent(status);
+  if (lote)   url += '&lote='+encodeURIComponent(lote);
+
+  document.getElementById('tabela-body').innerHTML = '<tr><td colspan="10" class="table-empty">⏳ Carregando...</td></tr>';
+
+  fetch(url).then(r=>r.json()).then(function(d) {
+    if (!d.ok) return;
+    totalRegistros = d.total;
+    document.getElementById('contador-total').textContent = d.total + ' contatos';
+    renderTabela(d.contatos);
+    renderPaginacao(d.total, page, perPage);
+  });
+}
+
+function renderTabela(contatos) {
+  var tbody = document.getElementById('tabela-body');
+  if (!contatos.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="table-empty">😕 Nenhum contato encontrado</td></tr>';
+    return;
+  }
+  tbody.innerHTML = contatos.map(function(c) {
+    var badge = c.status === 'Pago'
+      ? '<span class="badge badge-pago">✅ Pago</span>'
+      : c.status === 'Pendente'
+      ? '<span class="badge badge-pendente">⏳ Pendente</span>'
+      : '<span class="badge badge-disponivel">🔵 Disponível</span>';
+    var sel = selecionados.has(c.id);
+    return '<tr id="row-'+c.id+'">' +
+      '<td><input type="checkbox" class="chk row-chk" data-id="'+c.id+'" '+(sel?'checked':'')+' onchange="toggleSel(this)"></td>' +
+      '<td><span style="font-family:DM Mono,monospace;font-size:0.8rem;background:var(--bg4);padding:2px 8px;border-radius:5px;">'+(c.lote||'—')+'</span></td>' +
+      '<td class="td-nome">'+(c.nome||'—')+'</td>' +
+      '<td style="color:var(--text3);font-size:0.8rem;">'+(c.intervalo||'—')+'</td>' +
+      '<td style="color:var(--text2);font-size:0.82rem;">'+(c.vendedor||'—')+'</td>' +
+      '<td class="td-tel">'+(c.telefone||'—')+'</td>' +
+      '<td style="font-weight:600;color:var(--green);">'+(c.valor||'—')+'</td>' +
+      '<td>'+badge+'</td>' +
+      '<td style="font-size:0.75rem;color:var(--text3);">'+(c.ultimo_wa||'—')+'</td>' +
+      '<td>' +
+        '<div class="td-actions">' +
+          (c.telefone ? '<button class="btn btn-sm" style="background:#25d366;color:#fff;border:none;" onclick="enviarMensagem('+c.id+',\''+c.nome.replace(/'/g,"\\'")+'\')" title="Enviar cobrança WhatsApp">💬</button>' : '') +
+          '<button class="btn btn-ghost btn-sm" onclick="editarContato('+c.id+')" title="Editar">✏️</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deletarContato('+c.id+',\''+c.nome.replace(/'/g,"\\'")+'\')" title="Excluir">🗑</button>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderPaginacao(total, page, per) {
+  var pages = Math.ceil(total / per);
+  var info = document.getElementById('pag-info');
+  var btns = document.getElementById('pag-btns');
+  var from = (page-1)*per+1;
+  var to   = Math.min(page*per, total);
+  info.textContent = total > 0 ? (from+' – '+to+' de '+total) : '0 registros';
+  if (pages <= 1) { btns.innerHTML = ''; return; }
+  var html = '';
+  html += '<button class="pag-btn" onclick="carregarContatos('+(page-1)+')" '+(page<=1?'disabled':'')+'">‹</button>';
+  var start = Math.max(1, page-2), end = Math.min(pages, page+2);
+  if (start > 1) html += '<button class="pag-btn" onclick="carregarContatos(1)">1</button>'+(start>2?'<span style="padding:0 4px;color:var(--text3);">…</span>':'');
+  for (var i=start; i<=end; i++) {
+    html += '<button class="pag-btn'+(i===page?' active':'')+'" onclick="carregarContatos('+i+')">'+i+'</button>';
+  }
+  if (end < pages) html += (end<pages-1?'<span style="padding:0 4px;color:var(--text3);">…</span>':'')+'<button class="pag-btn" onclick="carregarContatos('+pages+')">'+pages+'</button>';
+  html += '<button class="pag-btn" onclick="carregarContatos('+(page+1)+')" '+(page>=pages?'disabled':'')+'">›</button>';
+  btns.innerHTML = html;
+}
+
+// ─── SELEÇÃO ─────────────────────────────────────────────
+function toggleAll(chk) {
+  document.querySelectorAll('.row-chk').forEach(function(c) {
+    c.checked = chk.checked;
+    var id = parseInt(c.dataset.id);
+    if (chk.checked) selecionados.add(id); else selecionados.delete(id);
+  });
+  atualizarBarra();
+}
+function toggleSel(chk) {
+  var id = parseInt(chk.dataset.id);
+  if (chk.checked) selecionados.add(id); else selecionados.delete(id);
+  atualizarBarra();
+}
+function atualizarBarra() {
+  var barra = document.getElementById('barra-acoes');
+  var n = selecionados.size;
+  if (n > 0) {
+    barra.style.display = 'flex';
+    document.getElementById('sel-count').textContent = n + ' selecionado'+(n>1?'s':'');
+  } else {
+    barra.style.display = 'none';
+  }
+}
+function limparSelecao() {
+  selecionados.clear();
+  document.querySelectorAll('.row-chk').forEach(function(c){ c.checked=false; });
+  document.getElementById('chk-all').checked = false;
+  atualizarBarra();
+}
+
+// ─── MODAL FORM ───────────────────────────────────────────
+function abrirModal(dados) {
+  var wEl = document.getElementById('f-whatsapp');
+  document.getElementById('f-id').value          = dados ? dados.id : '';
+  document.getElementById('f-nome').value        = dados ? dados.nome : '';
+  document.getElementById('f-telefone').value    = dados ? dados.telefone : '';
+  wEl.value = dados ? (dados.whatsapp||'') : '';
+  wEl._editado = !!(dados && dados.whatsapp);
+  document.getElementById('f-vendedor').value    = dados ? (dados.vendedor||'') : '';
+  document.getElementById('f-valor').value       = dados ? (dados.valor||'') : '';
+  document.getElementById('f-observacoes').value = dados ? (dados.observacoes||'') : '';
+  document.getElementById('modal-titulo').textContent = dados ? '✏️ Editar Contato' : '➕ Novo Contato';
+
+  var loteEl = document.getElementById('f-lote');
+  var intEl  = document.getElementById('f-intervalo');
+
+  if (dados) {
+    // Edição: mostra valores atuais, editável
+    loteEl.value    = dados.lote || '';
+    intEl.value     = dados.intervalo || '';
+    loteEl.readOnly = false;
+    intEl.readOnly  = false;
+    loteEl.style.background = '';
+    intEl.style.background  = '';
+    loteEl.style.color = '';
+    intEl.style.color  = '';
+  } else {
+    // Novo: busca automático, readonly
+    loteEl.value    = '...';
+    intEl.value     = '...';
+    loteEl.readOnly = true;
+    intEl.readOnly  = true;
+    loteEl.style.background = '#f8faff';
+    intEl.style.background  = '#f8faff';
+    loteEl.style.color = '#1d4ed8';
+    intEl.style.color  = '#1d4ed8';
+    fetch('/api/contatos/proximo-lote')
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d.ok){ loteEl.value=d.lote; intEl.value=d.intervalo; } });
+  }
+
+  document.getElementById('modal-form').classList.add('active');
+  setTimeout(function(){ document.getElementById('f-nome').focus(); }, 100);
+}
+function fecharModal() {
+  document.getElementById('modal-form').classList.remove('active');
+}
+function editarContato(id) {
+  fetch('/api/contatos/'+id).then(r=>r.json()).then(function(d) {
+    if (d.ok) abrirModal(d.contato);
+  });
+}
+function salvarContato() {
+  var id        = document.getElementById('f-id').value;
+  var nome      = document.getElementById('f-nome').value.trim();
+  var tel       = document.getElementById('f-telefone').value.trim();
+  var lote      = document.getElementById('f-lote').value.trim();
+  var intervalo = document.getElementById('f-intervalo').value.trim();
+  // Lote e Intervalo são obrigatórios
+  if (!lote)      { document.getElementById('f-lote').classList.add('error');      document.getElementById('f-lote').focus(); return; }
+  if (!intervalo) { document.getElementById('f-intervalo').classList.add('error'); document.getElementById('f-intervalo').focus(); return; }
+  document.getElementById('f-lote').classList.remove('error');
+  document.getElementById('f-intervalo').classList.remove('error');
+  document.getElementById('f-nome').classList.remove('error');
+  document.getElementById('f-telefone').classList.remove('error');
+  var btn = document.getElementById('btn-salvar');
+  btn.disabled = true; btn.textContent = '⏳ Salvando...';
+  var waVal = document.getElementById('f-whatsapp').value.trim();
+  var payload = {
+    nome: nome, telefone: tel,
+    whatsapp:    waVal || tel,
+    lote:        lote,
+    intervalo:   intervalo,
+    vendedor:    document.getElementById('f-vendedor').value.trim(),
+    valor:       document.getElementById('f-valor').value.trim(),
+    observacoes: document.getElementById('f-observacoes').value.trim(),
+  };
+  var url    = id ? '/api/contatos/'+id : '/api/contatos';
+  var method = id ? 'PUT' : 'POST';
+  fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+    .then(r=>r.json())
+    .then(function(d) {
+      if (d.ok) {
+        toast(d.msg, 'success');
+        fecharModal();
+        carregarContatos(paginaAtual);
+        carregarStats();
+        carregarLotes();
+      } else {
+        toast(d.erro || 'Erro ao salvar', 'error');
+      }
+    })
+    .finally(function(){ btn.disabled=false; btn.textContent='💾 Salvar'; });
+}
+
+function deletarContato(id, nome) {
+  if (!confirm('Excluir "'+nome+'"? Esta ação não pode ser desfeita.')) return;
+  fetch('/api/contatos/'+id, {method:'DELETE'})
+    .then(r=>r.json())
+    .then(function(d) {
+      if (d.ok) { toast(d.msg, 'success'); carregarContatos(paginaAtual); carregarStats(); }
+      else toast(d.erro||'Erro', 'error');
+    });
+}
+
+function enviarMensagem(id, nome) {
+  if (!confirm('Enviar cobrança WhatsApp para "'+nome+'"?')) return;
+  fetch('/api/grid/enviar-cobranca', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({linhas: [id]})
+  }).then(r=>r.json()).then(function(d) {
+    if (d.ok) {
+      toast('✅ Mensagem enviada para '+nome, 'success');
+      carregarContatos(paginaAtual);
+    } else {
+      toast('❌ '+(d.erro||d.msg||'Erro ao enviar'), 'error');
+    }
+  }).catch(function() {
+    toast('❌ Erro de conexão', 'error');
+  });
+}
+function deletarSelecionados() {
+  var ids = Array.from(selecionados);
+  if (!ids.length) return;
+  if (!confirm('Excluir '+ids.length+' contato(s)? Esta ação não pode ser desfeita.')) return;
+  var promises = ids.map(id => fetch('/api/contatos/'+id, {method:'DELETE'}));
+  Promise.all(promises).then(function() {
+    toast(ids.length+' contato(s) excluído(s)', 'success');
+    selecionados.clear();
+    atualizarBarra();
+    carregarContatos(paginaAtual);
+    carregarStats();
+  });
+}
+function marcarPagoSelecionados() {
+  var ids = Array.from(selecionados);
+  if (!ids.length) return;
+  fetch('/api/contatos/marcar-pago', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ids: ids})
+  }).then(r=>r.json()).then(function(d) {
+    if (d.ok) {
+      toast(d.msg, 'success');
+      selecionados.clear();
+      atualizarBarra();
+      carregarContatos(paginaAtual);
+      carregarStats();
+    } else toast(d.erro||'Erro', 'error');
+  });
+}
+
+// ─── SORT ─────────────────────────────────────────────────
+function sortBy(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  carregarContatos(paginaAtual);
+}
+
+// ─── IMPORTAR ─────────────────────────────────────────────
+function abrirImportar() { document.getElementById('modal-importar').classList.add('active'); }
+function fecharImportar() { document.getElementById('modal-importar').classList.remove('active'); }
+function lerArquivoImport(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('import-json').value = e.target.result;
+    try {
+      var data = JSON.parse(e.target.result);
+      var arr = Array.isArray(data) ? data : (data.contatos || []);
+      document.getElementById('import-preview').textContent = '✅ '+arr.length+' contato(s) encontrado(s) no arquivo';
+    } catch(ex) {
+      document.getElementById('import-preview').textContent = '❌ JSON inválido: '+ex.message;
+    }
+  };
+  reader.readAsText(file);
+}
+function dropImport(e) {
+  e.preventDefault();
+  document.getElementById('import-drop').classList.remove('drag');
+  var file = e.dataTransfer.files[0];
+  if (!file) return;
+  var fakeInput = {files:[file]};
+  lerArquivoImport(fakeInput);
+}
+function executarImport() {
+  var raw = document.getElementById('import-json').value.trim();
+  if (!raw) { toast('Cole o JSON ou faça upload de um arquivo', 'error'); return; }
+  var data;
+  try { data = JSON.parse(raw); } catch(e) { toast('JSON inválido: '+e.message, 'error'); return; }
+  var contatos = Array.isArray(data) ? data : (data.contatos || []);
+  if (!contatos.length) { toast('Nenhum contato encontrado no JSON', 'error'); return; }
+  fetch('/api/contatos/importar', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({contatos: contatos})
+  }).then(r=>r.json()).then(function(d) {
+    if (d.ok) {
+      toast(d.msg, 'success');
+      fecharImportar();
+      carregarContatos(1);
+      carregarStats();
+      carregarLotes();
+    } else toast(d.erro||'Erro', 'error');
+  });
+}
+
+// ─── TOAST ────────────────────────────────────────────────
+function toast(msg, type) {
+  var cont = document.getElementById('toasts');
+  var el = document.createElement('div');
+  el.className = 'toast '+(type||'');
+  el.innerHTML = (type==='success'?'✅':'❌')+' <span>'+msg+'</span>';
+  cont.appendChild(el);
+  setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity 0.4s'; setTimeout(function(){ el.remove(); }, 400); }, 3500);
+}
+
+// Fechar modal com ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { fecharModal(); fecharImportar(); }
+});
+</script>
+</body>
+</html>
