@@ -6779,8 +6779,7 @@ function fecharModalEstorno() {
 }
 
 function confirmarEstorno() {
-  console.log('[ESTORNO] confirmarEstorno chamado, _estornoId=', _estornoId, '_estornoContatoId=', _estornoContatoId);
-  if (!_estornoId) { console.log('[ESTORNO] _estornoId é null, abortando'); return; }
+  if (!_estornoId) return;
   var motivo = document.getElementById('estorno-motivo').value.trim();
   if (!motivo) {
     document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">⚠️ Informe o motivo do estorno</span>';
@@ -6789,15 +6788,12 @@ function confirmarEstorno() {
   var btn = document.getElementById('estorno-btn');
   btn.disabled = true;
   btn.textContent = '⏳ Estornando...';
-  console.log('[ESTORNO] Enviando POST para /api/pagamentos-parciais/' + _estornoId + '/estornar');
-
   fetch('/api/pagamentos-parciais/' + _estornoId + '/estornar', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({motivo: motivo})
   })
   .then(function(r){
-    console.log('[ESTORNO] Resposta recebida, status=', r.status, 'redirected=', r.redirected);
     if (r.status === 401 || r.redirected) {
       document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ Sessão expirada — faça login novamente</span>';
       btn.disabled = false;
@@ -6807,19 +6803,18 @@ function confirmarEstorno() {
     return r.json();
   })
   .then(function(d){
-    console.log('[ESTORNO] JSON recebido:', d);
     if (!d) return;
     if (d.ok) {
       var cid = _estornoContatoId;
-      console.log('[ESTORNO] Sucesso! cid=', cid);
       _estornoId = null;
       _estornoContatoId = null;
       document.getElementById('modal-estorno').style.display = 'none';
       mlCarregar();
       if (typeof carregarGrid === 'function') carregarGrid();
       atualizarCards();
-      console.log('[ESTORNO] Chamando mlAbrirDetalhes com cid=', cid);
-      if (cid) mlAbrirDetalhes(cid);
+      // Fecha detalhes e reabre após um delay seguro
+      document.getElementById('modal-ml-detalhes').style.display = 'none';
+      if (cid) setTimeout(function(){ mlAbrirDetalhes(cid); }, 500);
     } else {
       document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ ' + (d.msg||'Erro') + '</span>';
       btn.disabled = false;
