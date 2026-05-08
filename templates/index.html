@@ -6770,6 +6770,7 @@ function abrirModalEstorno(pagamentoId, contatoId) {
   document.getElementById('estorno-msg').innerHTML = '';
   document.getElementById('estorno-btn').disabled = false;
   document.getElementById('estorno-btn').textContent = '↩ Confirmar Estorno';
+  document.getElementById('modal-estorno').setAttribute('data-cid', contatoId);
   document.getElementById('modal-estorno').style.display = 'flex';
   setTimeout(function(){ document.getElementById('estorno-motivo').focus(); }, 100);
 }
@@ -6814,10 +6815,12 @@ function confirmarEstorno() {
     document.getElementById('estorno-msg').innerHTML = '';
     if (d.ok) {
       document.getElementById('modal-estorno').style.display = 'none';
-      document.getElementById('modal-ml-detalhes').style.display = 'none';
       mlCarregar();
       if (typeof carregarGrid === 'function') carregarGrid();
       atualizarCards();
+      // Recarrega os detalhes com o cid salvo no data attribute do modal
+      var cidSalvo = parseInt(document.getElementById('modal-estorno').getAttribute('data-cid') || '0');
+      if (cidSalvo) mlAbrirDetalhes(cidSalvo);
     } else {
       document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ ' + (d.msg||'Erro') + '</span>';
     }
