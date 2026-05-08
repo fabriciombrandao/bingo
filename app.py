@@ -286,9 +286,17 @@ def init_db():
                 forma_pagamento  TEXT DEFAULT '',
                 recebido_por     TEXT DEFAULT '',
                 criado_em        TEXT DEFAULT (datetime('now','localtime')),
-                usuario          TEXT DEFAULT ''
+                usuario          TEXT DEFAULT '',
+                estornado        INTEGER DEFAULT 0,
+                motivo_estorno   TEXT DEFAULT '',
+                estornado_em     TEXT DEFAULT '',
+                estornado_por    TEXT DEFAULT ''
             )""",
             "CREATE INDEX IF NOT EXISTS idx_pag_parcial_contato ON pagamentos_parciais(contato_id)",
+            "ALTER TABLE pagamentos_parciais ADD COLUMN estornado INTEGER DEFAULT 0",
+            "ALTER TABLE pagamentos_parciais ADD COLUMN motivo_estorno TEXT DEFAULT ''",
+            "ALTER TABLE pagamentos_parciais ADD COLUMN estornado_em TEXT DEFAULT ''",
+            "ALTER TABLE pagamentos_parciais ADD COLUMN estornado_por TEXT DEFAULT ''",
 
         ]:
             try: conn.execute(sql)
@@ -1575,6 +1583,9 @@ def api_pagamentos_contato(cid):
         valor_total = 0
     valor_pago = float(c.get("valor_pago") or 0)
     saldo = max(0, valor_total - valor_pago)
+    # Converte campos booleanos
+    for p in pagamentos:
+        p["estornado"] = bool(p.get("estornado"))
     return jsonify({
         "ok": True,
         "contato": {
@@ -1590,25 +1601,36 @@ def api_pagamentos_contato(cid):
 @app.route("/api/pagamentos-parciais/<int:pid>/estornar", methods=["POST"])
 @requer_login
 def api_estornar_pagamento(pid):
-    """Estorna um pagamento parcial. Recalcula saldo e status do contato."""
+    """Estorna um pagamento parcial — mantém registro, marca como estornado e recalcula saldo."""
+    d = request.get_json() or {}
+    motivo = (d.get("motivo") or "").strip()
+
     with get_db() as conn:
         pag = conn.execute("SELECT * FROM pagamentos_parciais WHERE id=?", (pid,)).fetchone()
         if not pag:
             return jsonify({"ok": False, "msg": "Pagamento não encontrado"})
         pag = dict(pag)
-        cid = pag["contato_id"]
 
+        if pag.get("estornado"):
+            return jsonify({"ok": False, "msg": "Este pagamento já foi estornado"})
+
+        cid = pag["contato_id"]
         row = conn.execute("SELECT * FROM contatos WHERE id=?", (cid,)).fetchone()
         if not row:
             return jsonify({"ok": False, "msg": "Contato não encontrado"})
         c = dict(row)
 
-        # Remove o pagamento
-        conn.execute("DELETE FROM pagamentos_parciais WHERE id=?", (pid,))
+        now = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-        # Recalcula valor_pago somando os restantes
+        # Marca como estornado (não deleta)
+        conn.execute(
+            "UPDATE pagamentos_parciais SET estornado=1, motivo_estorno=?, estornado_em=?, estornado_por=? WHERE id=?",
+            (motivo, now, session.get("usuario", ""), pid)
+        )
+
+        # Recalcula valor_pago somando apenas os não estornados
         restantes = conn.execute(
-            "SELECT COALESCE(SUM(valor),0) as total FROM pagamentos_parciais WHERE contato_id=?", (cid,)
+            "SELECT COALESCE(SUM(valor),0) as total FROM pagamentos_parciais WHERE contato_id=? AND estornado=0", (cid,)
         ).fetchone()
         novo_valor_pago = float(restantes["total"] or 0)
 
@@ -1619,7 +1641,6 @@ def api_estornar_pagamento(pid):
 
         novo_saldo = max(0, valor_total - novo_valor_pago)
 
-        # Define novo status
         if novo_valor_pago <= 0:
             novo_status = "Pendente"
         elif novo_valor_pago >= valor_total:
@@ -1627,7 +1648,6 @@ def api_estornar_pagamento(pid):
         else:
             novo_status = "Pgto. Parcial"
 
-        now = datetime.now().strftime("%d/%m/%Y %H:%M")
         conn.execute(
             "UPDATE contatos SET status=?, valor_pago=?, saldo_devedor=?, atualizado_em=? WHERE id=?",
             (novo_status, novo_valor_pago, novo_saldo, now, cid)
@@ -1637,7 +1657,7 @@ def api_estornar_pagamento(pid):
             lote=c["lote"], intervalo=c.get("intervalo",""),
             nome=c.get("nome",""), telefone=c.get("telefone",""),
             status_de=c.get("status",""), status_para=novo_status,
-            detalhes=f"Estorno do pagamento #{pid} de R$ {pag['valor']:.2f} | Novo saldo: R$ {novo_saldo:.2f}")
+            detalhes=f"Estorno do pagamento #{pid} de R$ {pag['valor']:.2f} | Motivo: {motivo} | Novo saldo: R$ {novo_saldo:.2f}")
 
     return jsonify({
         "ok": True,

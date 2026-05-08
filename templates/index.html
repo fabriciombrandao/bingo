@@ -6529,6 +6529,33 @@ function carregarAuditoria(page) {
   </div>
 </div>
 
+
+<!-- MODAL ESTORNO DE PAGAMENTO -->
+<div id="modal-estorno" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:4000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:400px;">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-weight:700;font-size:1rem;">↩ Estornar Pagamento</span>
+      <button onclick="fecharModalEstorno()" style="background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+      <div style="background:#ef444411;border:1px solid #ef444444;border-radius:8px;padding:10px 12px;font-size:0.82rem;color:#991b1b;">
+        ⚠️ O pagamento será marcado como estornado. O registro será mantido para auditoria.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">Motivo do Estorno <span style="color:var(--red);">*</span></label>
+        <textarea id="estorno-motivo" placeholder="Descreva o motivo do estorno..." rows="3" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:0.88rem;font-family:inherit;outline:none;width:100%;resize:vertical;"></textarea>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span id="estorno-msg" style="font-size:0.82rem;"></span>
+        <div style="display:flex;gap:10px;">
+          <button onclick="fecharModalEstorno()" style="padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-size:0.88rem;">Cancelar</button>
+          <button id="estorno-btn" onclick="confirmarEstorno()" style="padding:8px 18px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:0.88rem;font-weight:600;">↩ Confirmar Estorno</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="modal-vincular-lote" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:2000;align-items:center;justify-content:center;padding:20px;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;padding:24px;gap:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -6611,22 +6638,23 @@ function mlAbrirPago(id) {
   document.getElementById('modal-ml-pago').style.display = 'flex';
   setTimeout(function(){ document.getElementById('mlpago-valor').focus(); document.getElementById('mlpago-valor').select(); }, 100);
 
-  // Carrega histórico de pagamentos
+  // Carrega histórico de pagamentos (somente visualização, sem estorno)
   document.getElementById('mlpago-historico-wrap').style.display = 'none';
   if (id) {
     fetch('/api/contatos/' + id + '/pagamentos')
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (!d.ok || !d.pagamentos || !d.pagamentos.length) return;
+        var ativos = d.pagamentos.filter(function(p){ return !p.estornado; });
+        if (!ativos.length) return;
         var hist = document.getElementById('mlpago-historico');
-        hist.innerHTML = d.pagamentos.map(function(p){
+        hist.innerHTML = ativos.map(function(p){
           var val = 'R$ ' + parseFloat(p.valor).toFixed(2).replace('.',',');
           return '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);">' +
             '<span style="color:var(--text3);font-size:0.75rem;white-space:nowrap;">' + p.data_pagamento + '</span>' +
             '<span style="color:var(--text3);">' + p.forma_pagamento + '</span>' +
             '<span style="color:var(--text3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (p.recebido_por||'—') + '</span>' +
             '<span style="font-weight:600;color:#22c55e;white-space:nowrap;">' + val + '</span>' +
-            '<button onclick="mlEstornarPagamento(' + p.id + ',' + id + ')" title="Estornar este pagamento" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:0.8rem;padding:1px 4px;flex-shrink:0;">↩</button>' +
           '</div>';
         }).join('');
         document.getElementById('mlpago-historico-wrap').style.display = 'block';
@@ -6732,24 +6760,58 @@ function confirmarMlPago() {
   }
 }
 
-function mlEstornarPagamento(pagamentoId, contatoId) {
-  if (!confirm('Confirma o estorno deste pagamento?')) return;
-  fetch('/api/pagamentos-parciais/' + pagamentoId + '/estornar', {
+var _estornoId = null;
+var _estornoContatoId = null;
+
+function abrirModalEstorno(pagamentoId, contatoId) {
+  _estornoId = pagamentoId;
+  _estornoContatoId = contatoId;
+  document.getElementById('estorno-motivo').value = '';
+  document.getElementById('estorno-msg').innerHTML = '';
+  document.getElementById('modal-estorno').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('estorno-motivo').focus(); }, 100);
+}
+
+function fecharModalEstorno() {
+  document.getElementById('modal-estorno').style.display = 'none';
+  _estornoId = null;
+  _estornoContatoId = null;
+}
+
+function confirmarEstorno() {
+  if (!_estornoId) return;
+  var motivo = document.getElementById('estorno-motivo').value.trim();
+  if (!motivo) {
+    document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">⚠️ Informe o motivo do estorno</span>';
+    return;
+  }
+  var btn = document.getElementById('estorno-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Estornando...';
+
+  fetch('/api/pagamentos-parciais/' + _estornoId + '/estornar', {
     method: 'POST',
-    headers: {'Content-Type':'application/json'}
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({motivo: motivo})
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
     if (d.ok) {
+      fecharModalEstorno();
       mlCarregar();
       if (typeof carregarGrid === 'function') carregarGrid();
       atualizarCards();
-      // Reabre detalhes com dados atualizados
-      mlAbrirDetalhes(contatoId);
+      mlAbrirDetalhes(_estornoContatoId);
     } else {
-      alert('Erro: ' + (d.msg||'Não foi possível estornar'));
+      document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ ' + (d.msg||'Erro') + '</span>';
+      btn.disabled = false;
+      btn.textContent = '↩ Confirmar Estorno';
     }
   });
+}
+
+function mlEstornarPagamento(pagamentoId, contatoId) {
+  abrirModalEstorno(pagamentoId, contatoId);
 }
 
 // ── PREVISÃO DE PAGAMENTO ─────────────────────────────────
@@ -6939,16 +7001,19 @@ function mlAbrirDetalhes(id) {
             '</tr></thead><tbody>' +
             pd.pagamentos.map(function(p, i){
               var val = 'R$ ' + parseFloat(p.valor).toFixed(2).replace('.',',');
-              return '<tr style="border-bottom:1px solid var(--border);background:' + (i%2===0?'var(--bg2)':'var(--bg3)') + ';">' +
+              var isEstornado = p.estornado;
+              var bgColor = isEstornado ? '#ef444408' : (i%2===0?'var(--bg2)':'var(--bg3)');
+              var valColor = isEstornado ? '#ef4444' : '#22c55e';
+              var valStr = isEstornado ? '<s>' + val + '</s> <span style="font-size:0.7rem;color:#ef4444;">Estornado</span>' : val;
+              var acaoCell = isEstornado
+                ? '<td style="padding:6px 10px;font-size:0.72rem;color:#ef4444;">' + (p.motivo_estorno ? 'Motivo: ' + p.motivo_estorno : '—') + '<br><span style="color:var(--text3);">' + (p.estornado_em||'') + ' — ' + (p.estornado_por||'') + '</span></td>'
+                : '<td style="padding:6px 10px;text-align:center;"><button onclick="abrirModalEstorno(' + p.id + ',' + pd.contato.id + ')" title="Estornar este pagamento" style="background:#ef444422;border:1px solid #ef444488;border-radius:6px;color:#ef4444;font-size:0.75rem;padding:3px 8px;cursor:pointer;font-family:inherit;">↩ Estornar</button></td>';
+              return '<tr style="border-bottom:1px solid var(--border);background:' + bgColor + ';">' +
                 '<td style="padding:6px 10px;white-space:nowrap;color:var(--text3);">' + (p.data_pagamento||'—') + '</td>' +
-                '<td style="padding:6px 10px;font-weight:600;color:#22c55e;">' + val + '</td>' +
+                '<td style="padding:6px 10px;font-weight:600;color:' + valColor + ';">' + valStr + '</td>' +
                 '<td style="padding:6px 10px;">' + (p.forma_pagamento||'—') + '</td>' +
                 '<td style="padding:6px 10px;">' + (p.recebido_por||'—') + '</td>' +
-                '<td style="padding:6px 10px;text-align:center;">' +
-                  '<button onclick="mlEstornarPagamento(' + p.id + ',' + pd.contato.id + ')" ' +
-                  'title="Estornar este pagamento" ' +
-                  'style="background:#ef444422;border:1px solid #ef444488;border-radius:6px;color:#ef4444;font-size:0.75rem;padding:3px 8px;cursor:pointer;font-family:inherit;">↩ Estornar</button>' +
-                '</td>' +
+                acaoCell +
               '</tr>';
             }).join('') +
             '</tbody></table></div>';
