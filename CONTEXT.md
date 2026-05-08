@@ -117,6 +117,15 @@ journalctl -u bingo -f
 - CONTEXT.md criado com arquitetura completa do sistema
 - Primeiro commit: 417fab2 — sistema bingo v2.6.0
 - update.sh criado em /opt/bingo para deploy automático
-- Fluxo de atualização definido: Claude clona repo → edita → push → VPS roda update.sh
+- Fluxo de atualização definido: Claude clona repo → edita → push → VPS roda bingo-update
 - Servidor confirmado sincronizado com GitHub ✅
 - Definido que Claude consulta e atualiza CONTEXT.md direto no GitHub a cada sessão (mesmo padrão TNORTEANDO)
+- update.sh atualizado com backup automático do banco antes de cada deploy (mantém últimos 7 em /opt/bingo/backups/)
+- Criado symlink `bingo-update` em /usr/local/bin — roda de qualquer lugar no terminal
+- Implementado cancelamento de desmembramento de lotes:
+  - Backend: POST /api/contatos/<id>/cancelar-desmembramento
+  - Valida que todas as cartelas filhas estão com status Disponivel
+  - Se não estiver, retorna mensagem detalhando quais impedem o cancelamento
+  - Remove cartelas filhas e restaura lote original para Disponivel
+  - Registra na auditoria
+  - Frontend: modal de desmembrar exibe seção extra com lotes desmembrados e botão ↩ Cancelar
