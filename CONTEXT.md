@@ -29,12 +29,22 @@
 
 ---
 
+## 🌐 Ambientes
+
+| Ambiente | URL | Diretório | Porta | Serviço |
+| --- | --- | --- | --- | --- |
+| Produção | https://bingocoracaodemaria.cloud | /opt/bingo | 60080 | bingo |
+| Testes | https://dev.bingocoracaodemaria.cloud | /opt/bingo-dev | 60081 | bingo-dev |
+
+- **Update produção**: `bingo-update`
+- **Update testes**: `bingo-dev-update`
+
 ## 🔄 Fluxo de Desenvolvimento
 
 1. Claude clona o repo com token no início de cada sessão
 2. Claude edita os arquivos e faz `git push origin main`
-3. Fabricio roda `/opt/bingo/update.sh` no servidor
-4. Sistema atualizado ✅
+3. Fabricio roda `bingo-dev-update` para testar
+4. Aprovado → `bingo-update` sobe para produção ✅
 
 ### Início de sessão (Claude faz isso automaticamente)
 ```bash
@@ -122,7 +132,11 @@ journalctl -u bingo -f
 - Definido que Claude consulta e atualiza CONTEXT.md direto no GitHub a cada sessão (mesmo padrão TNORTEANDO)
 - update.sh atualizado com backup automático do banco antes de cada deploy (mantém últimos 7 em /opt/bingo/backups/)
 - Criado symlink `bingo-update` em /usr/local/bin — roda de qualquer lugar no terminal
-- Implementado cancelamento de desmembramento de lotes:
+- Ambiente de testes criado: https://dev.bingocoracaodemaria.cloud
+  - /opt/bingo-dev porta 60081, serviço bingo-dev
+  - SSL via Certbot, renovação automática
+  - bingo-dev-update disponível globalmente
+  - Fluxo: desenvolve/testa em dev → aprovado → bingo-update sobe para produção
   - Backend: POST /api/contatos/<id>/cancelar-desmembramento
   - Valida que todas as cartelas filhas estão com status Disponivel
   - Se não estiver, retorna mensagem detalhando quais impedem o cancelamento
