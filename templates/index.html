@@ -6794,19 +6794,34 @@ function confirmarEstorno() {
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({motivo: motivo})
   })
-  .then(function(r){ return r.json(); })
+  .then(function(r){
+    if (r.status === 401 || r.redirected) {
+      document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ Sessão expirada — faça login novamente</span>';
+      btn.disabled = false;
+      btn.textContent = '↩ Confirmar Estorno';
+      return null;
+    }
+    return r.json();
+  })
   .then(function(d){
+    if (!d) return;
     if (d.ok) {
+      var cid = _estornoContatoId;
       fecharModalEstorno();
       mlCarregar();
       if (typeof carregarGrid === 'function') carregarGrid();
       atualizarCards();
-      mlAbrirDetalhes(_estornoContatoId);
+      mlAbrirDetalhes(cid);
     } else {
       document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ ' + (d.msg||'Erro') + '</span>';
       btn.disabled = false;
       btn.textContent = '↩ Confirmar Estorno';
     }
+  })
+  .catch(function(){
+    document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ Erro de conexão</span>';
+    btn.disabled = false;
+    btn.textContent = '↩ Confirmar Estorno';
   });
 }
 
