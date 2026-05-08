@@ -276,6 +276,19 @@ def init_db():
             )""",
             "ALTER TABLE camisetas_pedidos ADD COLUMN comprovante_tipo TEXT DEFAULT ''",
             "ALTER TABLE camisetas_pedidos ADD COLUMN comprovante_em TEXT DEFAULT ''",
+            "ALTER TABLE contatos ADD COLUMN valor_pago REAL DEFAULT 0",
+            "ALTER TABLE contatos ADD COLUMN saldo_devedor REAL DEFAULT NULL",
+            """CREATE TABLE IF NOT EXISTS pagamentos_parciais (
+                id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                contato_id       INTEGER NOT NULL,
+                valor            REAL NOT NULL,
+                data_pagamento   TEXT DEFAULT '',
+                forma_pagamento  TEXT DEFAULT '',
+                recebido_por     TEXT DEFAULT '',
+                criado_em        TEXT DEFAULT (datetime('now','localtime')),
+                usuario          TEXT DEFAULT ''
+            )""",
+            "CREATE INDEX IF NOT EXISTS idx_pag_parcial_contato ON pagamentos_parciais(contato_id)",
 
         ]:
             try: conn.execute(sql)
@@ -609,7 +622,7 @@ def gerar_payload_pix(chave, nome, cidade, valor=None):
 # Status que disparam envio
 STATUS_DISPARA = ["pendente"]
 STATUS_PAGOS      = ["pago", "quitado", "confirmado", "ok", "sim", "s"]
-STATUS_BLOQUEADOS = ["pago", "quitado", "confirmado", "ok", "sim", "s", "desmembrado"]
+STATUS_BLOQUEADOS = ["pago", "quitado", "confirmado", "ok", "sim", "s", "desmembrado", "pgto. parcial"]
 
 def deve_disparar(status, previsao_pagamento=""):
     """Dispara se status=Pendente E (previsão vazia OU previsão <= hoje)."""
@@ -1465,6 +1478,82 @@ def api_cancelar_desmembramento(cid):
         "msg": f"Desmembramento cancelado! Lote {c['lote']} restaurado para Disponível.",
         "qtd_removidas": qtd
     })
+
+
+@app.route("/api/contatos/<int:cid>/pagamento-parcial", methods=["POST"])
+@requer_login
+def api_pagamento_parcial(cid):
+    """Registra um pagamento parcial. Se quitar, vira Pago. Senão, vira Pgto. Parcial."""
+    d = request.get_json() or {}
+    valor_str    = str(d.get("valor", "0") or "0")
+    data_pgto    = (d.get("data_pagamento") or datetime.now().strftime("%d/%m/%Y")).strip()
+    forma_pgto   = (d.get("forma_pagamento") or "Pix").strip()
+    recebido_por = (d.get("recebido_por") or "").strip()
+
+    try:
+        valor_num = float(re.sub(r"[^\d,.]", "", valor_str).replace(",", "."))
+    except:
+        return jsonify({"ok": False, "msg": "Valor inválido"})
+
+    if valor_num <= 0:
+        return jsonify({"ok": False, "msg": "O valor deve ser maior que zero"})
+
+    with get_db() as conn:
+        row = conn.execute("SELECT * FROM contatos WHERE id=?", (cid,)).fetchone()
+        if not row:
+            return jsonify({"ok": False, "msg": "Registro não encontrado"})
+        c = dict(row)
+
+        status_atual = (c.get("status") or "").strip().lower()
+        if status_atual in ["desmembrado", "pago"]:
+            return jsonify({"ok": False, "msg": f"Não é possível registrar pagamento para status '{c.get('status')}'"})
+
+        try:
+            valor_total = float(re.sub(r"[^\d,.]", "", str(c.get("valor") or "0")).replace(",", "."))
+        except:
+            valor_total = 0
+
+        valor_pago_ant = float(c.get("valor_pago") or 0)
+        saldo_ant      = float(c.get("saldo_devedor") or valor_total)
+
+        # Validação: não pode ser maior que o saldo
+        if saldo_ant > 0 and valor_num > saldo_ant:
+            return jsonify({"ok": False, "msg": f"Valor não pode ser maior que o saldo devedor (R$ {saldo_ant:.2f})"})
+
+        novo_valor_pago = valor_pago_ant + valor_num
+        novo_saldo      = max(0, valor_total - novo_valor_pago)
+        novo_status     = "Pago" if (valor_total > 0 and novo_valor_pago >= valor_total) else "Pgto. Parcial"
+
+        now = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+        conn.execute(
+            """INSERT INTO pagamentos_parciais
+               (contato_id, valor, data_pagamento, forma_pagamento, recebido_por, criado_em, usuario)
+               VALUES (?,?,?,?,?,?,?)""",
+            (cid, valor_num, data_pgto, forma_pgto, recebido_por, now, session.get("usuario", ""))
+        )
+        conn.execute(
+            """UPDATE contatos SET status=?, valor_pago=?, saldo_devedor=?,
+               data_pagamento=?, forma_pagamento=?, atualizado_em=? WHERE id=?""",
+            (novo_status, novo_valor_pago, novo_saldo, data_pgto, forma_pgto, now, cid)
+        )
+
+    auditar("PAGAMENTO_PARCIAL", contato_id=cid,
+            lote=c["lote"], intervalo=c.get("intervalo",""),
+            nome=c.get("nome",""), telefone=c.get("telefone",""),
+            status_de=c.get("status",""), status_para=novo_status,
+            detalhes=f"Valor: R$ {valor_num:.2f} | Forma: {forma_pgto} | Por: {recebido_por} | Total pago: R$ {novo_valor_pago:.2f} | Saldo: R$ {novo_saldo:.2f}")
+
+    valor_fmt = f"R$ {valor_num:_.2f}".replace("_", ".").replace(".",",",1) if False else f"R$ {valor_num:.2f}".replace(".",",")
+    return jsonify({
+        "ok": True,
+        "msg": f"Pagamento de R$ {valor_num:.2f} registrado!".replace(".",","),
+        "novo_status": novo_status,
+        "valor_pago": novo_valor_pago,
+        "saldo_devedor": novo_saldo,
+        "quitado": novo_status == "Pago"
+    })
+
 
 
 @app.route("/api/contatos/lotes")

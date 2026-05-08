@@ -1990,11 +1990,12 @@ function ordenarGridDados() {
 
 function badgeStatus(st) {
   var s = (st||'').trim().toLowerCase();
-  var cor = s === 'pago'         ? '#22c55e'
-          : s === 'pendente'     ? '#f59e0b'
-          : s === 'disponivel'   ? '#3b82f6'
-          : s === 'desmembrado'  ? '#8b5cf6'
-          : s === ''             ? '#3b82f6'
+  var cor = s === 'pago'           ? '#22c55e'
+          : s === 'pendente'       ? '#f59e0b'
+          : s === 'disponivel'     ? '#3b82f6'
+          : s === 'desmembrado'    ? '#8b5cf6'
+          : s === 'pgto. parcial'  ? '#f97316'
+          : s === ''               ? '#3b82f6'
           : '#6b7280';
   var label = st || 'Disponível';
   return '<span style="background:'+cor+'22;color:'+cor+';padding:2px 8px;border-radius:99px;font-size:0.75rem;font-weight:600;">'+label+'</span>';
@@ -5907,17 +5908,46 @@ function carregarAuditoria(page) {
 
 <!-- MODAL MARCAR PAGO -->
 <div id="modal-ml-pago" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:3500;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:380px;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:420px;">
     <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-      <span id="mlpago-titulo" style="font-weight:700;font-size:1rem;">✅ Confirmar Pagamento</span>
+      <div>
+        <span id="mlpago-titulo" style="font-weight:700;font-size:1rem;">✅ Confirmar Pagamento</span>
+        <div id="mlpago-subtitulo" style="font-size:0.78rem;color:var(--text3);margin-top:2px;"></div>
+      </div>
       <button onclick="fecharMlPago()" style="background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;padding:2px 6px;">✕</button>
     </div>
     <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
       <input type="hidden" id="mlpago-id">
+      <input type="hidden" id="mlpago-valor-total">
+      <input type="hidden" id="mlpago-saldo-devedor">
+
+      <!-- Métricas valor/saldo (só aparece em modo parcial) -->
+      <div id="mlpago-metricas" style="display:none;gap:8px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:var(--bg3);border-radius:8px;padding:10px;">
+            <div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">Valor total</div>
+            <div style="font-size:1rem;font-weight:700;" id="mlpago-m-total">—</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:10px;">
+            <div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">Saldo devedor</div>
+            <div style="font-size:1rem;font-weight:700;color:#f97316;" id="mlpago-m-saldo">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Valor recebido -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">Valor Recebido <span style="color:var(--red);">*</span></label>
+        <input type="text" id="mlpago-valor" placeholder="0,00" oninput="mlPagoAtualizarAviso()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:0.9rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor=''">
+      </div>
+
+      <!-- Data -->
       <div style="display:flex;flex-direction:column;gap:6px;">
         <label style="font-size:0.78rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">Data de Pagamento</label>
         <input type="date" id="mlpago-data" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:0.9rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor=''">
       </div>
+
+      <!-- Forma de pagamento -->
       <div style="display:flex;flex-direction:column;gap:6px;">
         <label style="font-size:0.78rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">Forma de Pagamento <span style="color:var(--red);">*</span></label>
         <select id="mlpago-forma" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:0.9rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor=''">
@@ -5928,11 +5958,28 @@ function carregarAuditoria(page) {
           <option value="Cartao Debito">Cartão Débito</option>
         </select>
       </div>
+
+      <!-- Nome Pagador -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;">Nome Pagador</label>
+        <input type="text" id="mlpago-nome-pagador" placeholder="Nome de quem realizou o pagamento" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 12px;font-size:0.9rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor=''">
+      </div>
+
+      <!-- Aviso parcial -->
+      <div id="mlpago-aviso-parcial" style="display:none;background:#f59e0b11;border:1px solid #f59e0b44;border-radius:8px;padding:10px 12px;font-size:0.82rem;color:#92400e;">
+        ⚠️ Valor menor que o total — registro ficará como <b>Pgto. Parcial</b>
+      </div>
+
+      <!-- Erro validação -->
+      <div id="mlpago-aviso-erro" style="display:none;background:#ef444411;border:1px solid #ef444444;border-radius:8px;padding:10px 12px;font-size:0.82rem;color:#991b1b;">
+        ❌ <span id="mlpago-aviso-erro-txt"></span>
+      </div>
+
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
         <span id="mlpago-msg" style="font-size:0.82rem;"></span>
         <div style="display:flex;gap:10px;">
           <button onclick="fecharMlPago()" style="padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-size:0.88rem;">Cancelar</button>
-          <button onclick="confirmarMlPago()" style="padding:8px 18px;border-radius:8px;border:none;background:#22c55e;color:#fff;cursor:pointer;font-size:0.88rem;font-weight:600;">✅ Confirmar</button>
+          <button onclick="confirmarMlPago()" id="mlpago-btn-confirmar" style="padding:8px 18px;border-radius:8px;border:none;background:#22c55e;color:#fff;cursor:pointer;font-size:0.88rem;font-weight:600;">✅ Confirmar</button>
         </div>
       </div>
     </div>
@@ -6517,11 +6564,45 @@ function mlAbrirPago(id) {
   document.getElementById('mlpago-id').value    = id;
   document.getElementById('mlpago-data').value  = hoje;
   document.getElementById('mlpago-forma').value = '';
+  document.getElementById('mlpago-valor').value = '';
+  document.getElementById('mlpago-nome-pagador').value = '';
   document.getElementById('mlpago-msg').innerHTML = '';
+  document.getElementById('mlpago-aviso-parcial').style.display = 'none';
+  document.getElementById('mlpago-aviso-erro').style.display = 'none';
   document.getElementById('mlpago-titulo').textContent = '✅ Confirmar Pagamento';
+  document.getElementById('mlpago-subtitulo').textContent = '';
   _mlPagoCallback = null;
+
+  // Busca dados do registro para exibir valor/saldo
+  var r = (mlDados || []).find(function(x){ return x.id === id; });
+  if (!r) r = (gridDados || []).find(function(x){ return x.id === id; });
+  if (r) {
+    var valorStr = (r.valor||'0').replace(/[^\d,.]/g,'').replace(',','.');
+    var valorNum = parseFloat(valorStr) || 0;
+    var saldoNum = (r.saldo_devedor != null) ? parseFloat(r.saldo_devedor) : valorNum;
+    var valorPago = (r.valor_pago != null) ? parseFloat(r.valor_pago) : 0;
+
+    document.getElementById('mlpago-valor-total').value = valorNum;
+    document.getElementById('mlpago-saldo-devedor').value = saldoNum;
+    document.getElementById('mlpago-subtitulo').textContent = (r.nome||'') + (r.lote ? ' — Lote ' + r.lote : '');
+
+    if (valorPago > 0 || saldoNum < valorNum) {
+      document.getElementById('mlpago-metricas').style.display = 'flex';
+      document.getElementById('mlpago-m-total').textContent = 'R$ ' + valorNum.toFixed(2).replace('.',',');
+      document.getElementById('mlpago-m-saldo').textContent = 'R$ ' + saldoNum.toFixed(2).replace('.',',');
+    } else {
+      document.getElementById('mlpago-metricas').style.display = 'none';
+    }
+    // Pré-preenche valor com saldo devedor
+    document.getElementById('mlpago-valor').value = saldoNum.toFixed(2).replace('.',',');
+  } else {
+    document.getElementById('mlpago-metricas').style.display = 'none';
+    document.getElementById('mlpago-valor-total').value = 0;
+    document.getElementById('mlpago-saldo-devedor').value = 0;
+  }
+
   document.getElementById('modal-ml-pago').style.display = 'flex';
-  setTimeout(function(){ document.getElementById('mlpago-forma').focus(); }, 100);
+  setTimeout(function(){ document.getElementById('mlpago-valor').focus(); document.getElementById('mlpago-valor').select(); }, 100);
 }
 
 function mlAbrirPagoLote(ids, callback) {
@@ -6540,38 +6621,89 @@ function fecharMlPago() {
   document.getElementById('modal-ml-pago').style.display = 'none';
 }
 
+function mlPagoAtualizarAviso() {
+  var valorInput = (document.getElementById('mlpago-valor').value||'').replace(/[^0-9,.]/g,'').replace(',','.');
+  var valorNum = parseFloat(valorInput) || 0;
+  var saldoNum = parseFloat(document.getElementById('mlpago-saldo-devedor').value||'0') || 0;
+  var totalNum = parseFloat(document.getElementById('mlpago-valor-total').value||'0') || 0;
+  var avisoP = document.getElementById('mlpago-aviso-parcial');
+  var avisoE = document.getElementById('mlpago-aviso-erro');
+  if (saldoNum > 0 && valorNum > saldoNum) {
+    avisoE.style.display = 'block';
+    document.getElementById('mlpago-aviso-erro-txt').textContent = 'Valor não pode ser maior que o saldo devedor (R$ ' + saldoNum.toFixed(2).replace('.',',') + ')';
+    avisoP.style.display = 'none';
+  } else if (totalNum > 0 && valorNum > 0 && valorNum < totalNum) {
+    avisoP.style.display = 'block';
+    avisoE.style.display = 'none';
+  } else {
+    avisoP.style.display = 'none';
+    avisoE.style.display = 'none';
+  }
+}
+
 function confirmarMlPago() {
   var id    = document.getElementById('mlpago-id').value;
   var data  = document.getElementById('mlpago-data').value;
   var forma = document.getElementById('mlpago-forma').value;
-  var msg   = document.getElementById('mlpago-msg');
+  var valorInput = (document.getElementById('mlpago-valor').value||'').replace(/[^0-9,.]/g,'').replace(',','.');
+  var valorNum = parseFloat(valorInput) || 0;
+  var saldoNum = parseFloat(document.getElementById('mlpago-saldo-devedor').value||'0') || 0;
+  var totalNum = parseFloat(document.getElementById('mlpago-valor-total').value||'0') || 0;
+  var nomePagador = (document.getElementById('mlpago-nome-pagador').value||'').trim();
+  var msg = document.getElementById('mlpago-msg');
+
   if (!forma) {
     msg.innerHTML = '<span style="color:var(--red);">⚠️ Selecione a forma de pagamento!</span>';
     document.getElementById('mlpago-forma').focus();
     return;
   }
-  // Modo lote — usa callback
+  if (saldoNum > 0 && valorNum > saldoNum) {
+    msg.innerHTML = '<span style="color:var(--red);">⚠️ Valor maior que o saldo devedor!</span>';
+    document.getElementById('mlpago-valor').focus();
+    return;
+  }
+
+  // Modo lote — usa callback (sem parcial)
   if (_mlPagoCallback) {
     fecharMlPago();
     _mlPagoCallback(data, forma);
     return;
   }
-  // Modo unitário
+
+  var isParcial = totalNum > 0 && valorNum > 0 && valorNum < totalNum;
   msg.innerHTML = '<span style="color:var(--text3);">Salvando...</span>';
-  fetch('/api/grid/marcar-pago', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({linhas: [parseInt(id)], data_pagamento: data, forma_pagamento: forma})
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(d){
-    if (d.ok) {
-      msg.innerHTML = '<span style="color:var(--green);">✅ Pago!</span>';
-      setTimeout(function(){ fecharMlPago(); mlCarregar(); if(typeof carregarGrid==='function') carregarGrid(); }, 600);
-    } else {
-      msg.innerHTML = '<span style="color:var(--red);">' + (d.msg||'Erro') + '</span>';
-    }
-  });
+
+  if (isParcial) {
+    fetch('/api/contatos/' + id + '/pagamento-parcial', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({valor: valorInput, data_pagamento: data.split('-').reverse().join('/'), forma_pagamento: forma, recebido_por: nomePagador})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.ok) {
+        msg.innerHTML = '<span style="color:var(--green);">✅ ' + d.msg + '</span>';
+        setTimeout(function(){ fecharMlPago(); mlCarregar(); if(typeof carregarGrid==='function') carregarGrid(); atualizarCards(); }, 800);
+      } else {
+        msg.innerHTML = '<span style="color:var(--red);">' + (d.msg||'Erro') + '</span>';
+      }
+    });
+  } else {
+    fetch('/api/grid/marcar-pago', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({linhas: [parseInt(id)], data_pagamento: data, forma_pagamento: forma, nome_pagador: nomePagador})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.ok) {
+        msg.innerHTML = '<span style="color:var(--green);">✅ Pago!</span>';
+        setTimeout(function(){ fecharMlPago(); mlCarregar(); if(typeof carregarGrid==='function') carregarGrid(); }, 600);
+      } else {
+        msg.innerHTML = '<span style="color:var(--red);">' + (d.msg||'Erro') + '</span>';
+      }
+    });
+  }
 }
 
 // ── PREVISÃO DE PAGAMENTO ─────────────────────────────────
