@@ -12,18 +12,20 @@ rm -rf /opt/bingo-dev
 cp -r /opt/bingo /opt/bingo-dev
 echo "✅ Projeto copiado"
 
-# 2. Copia o banco de produção
+# 2. Copia o banco de produção com nome diferente
 echo ""
-echo "🗄  [2/6] Copiando banco de produção..."
-cp /opt/bingo/bingo.db /opt/bingo-dev/bingo.db
-echo "✅ Banco copiado"
+echo "🗄  [2/6] Copiando banco de produção como bingo-dev.db..."
+cp /opt/bingo/bingo.db /opt/bingo-dev/bingo-dev.db
+echo "✅ Banco copiado como bingo-dev.db"
 
-# 3. Ajusta a porta para 60081
+# 3. Ajusta porta e nome do banco no app de testes
 echo ""
-echo "⚙️  [3/6] Ajustando porta para 60081..."
+echo "⚙️  [3/6] Ajustando porta para 60081 e banco para bingo-dev.db..."
 sed -i 's/port=60080/port=60081/' /opt/bingo-dev/app.py
+sed -i 's|DB_PATH = os.path.join(APP_DIR, "bingo.db")|DB_PATH = os.path.join(APP_DIR, "bingo-dev.db")|' /opt/bingo-dev/app.py
 grep "app.run" /opt/bingo-dev/app.py | tail -1
-echo "✅ Porta ajustada"
+grep "DB_PATH" /opt/bingo-dev/app.py | head -1
+echo "✅ Porta e banco ajustados"
 
 # 4. Cria o serviço systemd
 echo ""
@@ -95,8 +97,8 @@ cd /opt/bingo-dev
 BACKUP_DIR="/opt/bingo-dev/backups"
 mkdir -p "$BACKUP_DIR"
 BACKUP_FILE="$BACKUP_DIR/bingo_dev_$(date +%Y%m%d_%H%M%S).db"
-if [ -f "bingo.db" ]; then
-  cp bingo.db "$BACKUP_FILE"
+if [ -f "bingo-dev.db" ]; then
+  cp bingo-dev.db "$BACKUP_FILE"
   echo "💾 Backup dev criado: $BACKUP_FILE"
 fi
 ls -t "$BACKUP_DIR"/bingo_dev_*.db 2>/dev/null | tail -n +8 | xargs -r rm
@@ -105,8 +107,9 @@ ls -t "$BACKUP_DIR"/bingo_dev_*.db 2>/dev/null | tail -n +8 | xargs -r rm
 echo "🔄 Atualizando código..."
 git pull origin main
 
-# Ajusta porta para dev
+# Ajusta porta e banco para dev
 sed -i 's/port=60080/port=60081/' /opt/bingo-dev/app.py
+sed -i 's|DB_PATH = os.path.join(APP_DIR, "bingo.db")|DB_PATH = os.path.join(APP_DIR, "bingo-dev.db")|' /opt/bingo-dev/app.py
 
 # Reinicia
 echo "🔁 Reiniciando bingo-dev..."
