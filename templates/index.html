@@ -6645,7 +6645,7 @@ function mlAbrirPago(id) {
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (!d.ok || !d.pagamentos || !d.pagamentos.length) return;
-        var ativos = d.pagamentos.filter(function(p){ return !p.estornado; });
+        var ativos = d.pagamentos.filter(function(p){ return p.estornado != 1 && p.estornado !== true; });
         if (!ativos.length) return;
         var hist = document.getElementById('mlpago-historico');
         hist.innerHTML = ativos.map(function(p){
@@ -7017,7 +7017,7 @@ function mlAbrirDetalhes(id) {
             '</tr></thead><tbody>' +
             pd.pagamentos.map(function(p, i){
               var val = 'R$ ' + parseFloat(p.valor).toFixed(2).replace('.',',');
-              var isEstornado = p.estornado;
+              var isEstornado = p.estornado == 1 || p.estornado === true;
               var bgColor = isEstornado ? '#ef444408' : (i%2===0?'var(--bg2)':'var(--bg3)');
               var valColor = isEstornado ? '#ef4444' : '#22c55e';
               var valStr = isEstornado ? '<s>' + val + '</s> <span style="font-size:0.7rem;color:#ef4444;">Estornado</span>' : val;
