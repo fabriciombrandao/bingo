@@ -1994,6 +1994,7 @@ function badgeStatus(st) {
           : s === 'pendente'     ? '#f59e0b'
           : s === 'disponivel'   ? '#3b82f6'
           : s === 'desmembrado'  ? '#8b5cf6'
+          : s === 'parcial'      ? '#f97316'
           : s === ''             ? '#3b82f6'
           : '#6b7280';
   var label = st || 'Disponível';
@@ -2050,6 +2051,15 @@ function renderGrid() {
       '<td style="padding:9px 12px;color:var(--text2);">'+(r.vendedor||'-')+'</td>' +
       '<td style="padding:9px 12px;color:var(--text3);">'+tel+(alertaInbox ? ' '+alertaInbox : '')+'</td>' +
       '<td style="padding:9px 12px;font-weight:500;">'+(r.valor||'-')+'</td>' +
+      (function(){
+        var st2 = (r.status||'').toLowerCase();
+        if (st2 === 'parcial' && r.saldo_devedor != null) {
+          var saldo = parseFloat(r.saldo_devedor) || 0;
+          var saldoFmt = 'R$ ' + saldo.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+          return '<td style="padding:9px 12px;font-weight:600;color:#f97316;">' + saldoFmt + '</td>';
+        }
+        return '<td style="padding:9px 12px;color:var(--text3);">—</td>';
+      })() +
       '<td style="padding:9px 12px;">'+badgeStatus(r.status)+'</td>' +
       '<td style="padding:9px 12px;color:var(--text3);font-size:0.78rem;">'+(r.ultimo_wa||'-')+'</td>' +
       (function(){
@@ -2057,6 +2067,8 @@ function renderGrid() {
         var isPago        = st === 'pago';
         var isDisponivel  = st === 'disponivel';
         var isDesmembrado = st === 'desmembrado';
+
+        var isParcial = st === 'parcial';
 
         var btnEnviar = (isDisponivel || isDesmembrado || isPago)
           ? '<button title="'+(isDesmembrado?'Lote desmembrado':isPago?'Lote já pago':'Lote ainda não vinculado')+'" style="background:none;border:none;cursor:not-allowed;font-size:1rem;padding:2px 4px;opacity:0.3;" disabled>📤</button>'
@@ -2070,8 +2082,12 @@ function renderGrid() {
           ? '<button onclick="abrirVincularLote()" title="Vincular lote disponível" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 4px;">🔗</button>'
           : '<button title="'+(isDesmembrado?'Lote desmembrado':'Apenas lotes Disponíveis podem ser vinculados')+'" style="background:none;border:none;cursor:not-allowed;font-size:1rem;padding:2px 4px;opacity:0.3;" disabled>🔗</button>';
 
+        var btnParcial = (isPago || isDisponivel || isDesmembrado)
+          ? ''
+          : '<button onclick="abrirPagamentoParcial('+r.id+')" title="Registrar pagamento parcial" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 4px;">💰</button>';
+
         return '<td style="padding:9px 12px;text-align:center;">' +
-          btnEnviar + btnPago + btnVincular +
+          btnEnviar + btnPago + btnParcial + btnVincular +
           '</td>';
       })() +
     '</tr>';
@@ -2339,8 +2355,8 @@ function rcRenderizarTabela(resumido) {
   }
 
   var cols = resumido
-    ? ['Lote','Cartelas','Nome','Status','Valor','Prev. Pgto','Data Pgto','Forma Pgto']
-    : ['Lote','Cartelas','Nome','Telefone','Vendedor','Valor','Prev. Pgto','Status','Data Pgto','Forma Pgto'];
+    ? ['Lote','Cartelas','Nome','Status','Valor','Saldo','Prev. Pgto','Data Pgto','Forma Pgto']
+    : ['Lote','Cartelas','Nome','Telefone','Vendedor','Valor','Saldo','Prev. Pgto','Status','Data Pgto','Forma Pgto'];
 
   var html = '<table id="rc-tabela" style="width:100%;border-collapse:collapse;font-size:0.78rem;">' +
     '<thead><tr style="background:var(--bg3);position:sticky;top:0;z-index:1;">' +
@@ -5998,6 +6014,7 @@ function carregarAuditoria(page) {
             <option value="pago">✅ Pago</option>
             <option value="disponivel">🟢 Disponivel</option>
             <option value="desmembrado">🔀 Desmembrado</option>
+          <option value="parcial">💰 Parcial</option>
           </select>
           <select id="ml-filtro-prev" onchange="mlFiltrar()" style="padding:7px 10px;font-size:0.82rem;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);">
             <option value="">📅 Todas as Prev.</option>
@@ -6472,6 +6489,91 @@ function carregarAuditoria(page) {
       <button id="canc-desm-btn" onclick="confirmarCancelarDesmembramento()" style="padding:9px 20px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-family:inherit;font-size:0.88rem;font-weight:600;">↩ Confirmar Cancelamento</button>
     </div>
     <div id="canc-desm-status" style="margin-top:10px;font-size:0.82rem;text-align:center;"></div>
+  </div>
+</div>
+
+
+<!-- MODAL PAGAMENTO PARCIAL -->
+<div id="modal-pagamento-parcial" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:2000;align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:100%;max-width:520px;margin:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div style="font-size:1.05rem;font-weight:700;">💰 Recebimento Parcial</div>
+        <div style="font-size:0.78rem;color:var(--text3);" id="pp-subtitulo">Lote — </div>
+      </div>
+      <button onclick="fecharPagamentoParcial()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:1rem;">✕</button>
+    </div>
+
+    <!-- Métricas -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;">
+        <div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">Valor total</div>
+        <div style="font-size:1rem;font-weight:700;" id="pp-valor-total">—</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;">
+        <div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">Total pago</div>
+        <div style="font-size:1rem;font-weight:700;color:#22c55e;" id="pp-valor-pago">—</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;">
+        <div style="font-size:0.7rem;color:var(--text3);margin-bottom:2px;">Saldo devedor</div>
+        <div style="font-size:1rem;font-weight:700;color:#f97316;" id="pp-saldo">—</div>
+      </div>
+    </div>
+
+    <!-- Barra de progresso -->
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text3);margin-bottom:4px;">
+        <span id="pp-pct-label">0% pago</span>
+        <span id="pp-falta-label"></span>
+      </div>
+      <div style="height:5px;background:var(--bg3);border-radius:99px;overflow:hidden;">
+        <div id="pp-progress-bar" style="height:100%;background:#22c55e;border-radius:99px;width:0%;transition:width 0.3s;"></div>
+      </div>
+    </div>
+
+    <!-- Histórico -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:0.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Histórico de pagamentos</div>
+      <div id="pp-historico" style="background:var(--bg3);border-radius:8px;padding:8px;max-height:130px;overflow-y:auto;font-size:0.8rem;">
+        <div style="color:var(--text3);text-align:center;padding:10px;">Nenhum pagamento ainda.</div>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin-bottom:14px;"></div>
+
+    <!-- Formulário -->
+    <div style="font-size:0.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Novo pagamento</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Valor recebido *</label>
+        <input type="text" id="pp-input-valor" placeholder="0,00" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text);font-size:0.88rem;font-family:inherit;">
+      </div>
+      <div>
+        <label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Data</label>
+        <input type="text" id="pp-input-data" placeholder="dd/mm/aaaa" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text);font-size:0.88rem;font-family:inherit;">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div>
+        <label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Forma de pagamento</label>
+        <select id="pp-input-forma" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text);font-size:0.88rem;font-family:inherit;">
+          <option value="Pix">Pix</option>
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Cartao Credito">Cartão Crédito</option>
+          <option value="Cartao Debito">Cartão Débito</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Recebido por</label>
+        <input type="text" id="pp-input-recebido-por" placeholder="Nome de quem pagou" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text);font-size:0.88rem;font-family:inherit;">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button onclick="fecharPagamentoParcial()" style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:inherit;font-size:0.88rem;">Cancelar</button>
+      <button id="pp-btn-registrar" onclick="confirmarPagamentoParcial()" style="flex:2;padding:9px;border-radius:8px;border:none;background:#f97316;color:#fff;cursor:pointer;font-family:inherit;font-size:0.88rem;font-weight:600;">💰 Registrar pagamento</button>
+    </div>
+    <div id="pp-status" style="margin-top:10px;font-size:0.82rem;text-align:center;min-height:16px;"></div>
   </div>
 </div>
 
@@ -9446,6 +9548,123 @@ function camUploadFoto(lado){
     el.textContent=d.ok?'&#10003; '+d.msg:'&#10007; '+d.erro; el.style.color=d.ok?'#16a34a':'#ef4444';
   });
 }
+
+var _ppId = null;
+var _ppDados = null;
+
+function abrirPagamentoParcial(id) {
+  _ppId = id;
+  document.getElementById('pp-status').innerHTML = '';
+  document.getElementById('pp-input-valor').value = '';
+  document.getElementById('pp-input-recebido-por').value = '';
+
+  // Data de hoje
+  var hoje = new Date();
+  var dia = String(hoje.getDate()).padStart(2,'0');
+  var mes = String(hoje.getMonth()+1).padStart(2,'0');
+  document.getElementById('pp-input-data').value = dia+'/'+mes+'/'+hoje.getFullYear();
+
+  document.getElementById('modal-pagamento-parcial').style.display = 'flex';
+  ppCarregarDados(id);
+}
+
+function fecharPagamentoParcial() {
+  document.getElementById('modal-pagamento-parcial').style.display = 'none';
+  _ppId = null;
+  _ppDados = null;
+}
+
+function ppCarregarDados(id) {
+  fetch('/api/contatos/'+id+'/pagamentos')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) return;
+      _ppDados = d;
+      var c = d.contato;
+
+      document.getElementById('pp-subtitulo').textContent = 'Lote '+c.lote+' — '+(c.nome||'Sem nome')+' — '+badgeStatus(c.status).replace(/<[^>]+>/g,'');
+      document.getElementById('pp-valor-total').textContent = c.valor || '—';
+
+      var pago = c.valor_pago || 0;
+      var saldo = c.saldo_devedor || 0;
+      var total = c.valor_total || 0;
+
+      var pagoFmt = 'R$ '+pago.toFixed(2).replace('.',',');
+      var saldoFmt = 'R$ '+saldo.toFixed(2).replace('.',',');
+      document.getElementById('pp-valor-pago').textContent = pagoFmt;
+      document.getElementById('pp-saldo').textContent = saldoFmt;
+
+      var pct = total > 0 ? Math.round((pago/total)*100) : 0;
+      document.getElementById('pp-pct-label').textContent = pct+'% pago';
+      document.getElementById('pp-falta-label').textContent = 'faltam '+saldoFmt;
+      document.getElementById('pp-progress-bar').style.width = pct+'%';
+
+      // Histórico
+      var hist = document.getElementById('pp-historico');
+      if (!d.pagamentos || !d.pagamentos.length) {
+        hist.innerHTML = '<div style="color:var(--text3);text-align:center;padding:10px;">Nenhum pagamento ainda.</div>';
+      } else {
+        hist.innerHTML = d.pagamentos.map(function(p){
+          var val = 'R$ '+parseFloat(p.valor).toFixed(2).replace('.',',');
+          return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">' +
+            '<span style="color:var(--text3);font-size:0.75rem;">'+p.data_pagamento+'</span>' +
+            '<span style="color:var(--text3);">'+p.forma_pagamento+'</span>' +
+            '<span style="color:var(--text3);">'+( p.recebido_por||'—')+'</span>' +
+            '<span style="margin-left:auto;font-weight:600;color:#22c55e;">'+val+'</span>' +
+          '</div>';
+        }).join('');
+      }
+    });
+}
+
+function confirmarPagamentoParcial() {
+  if (!_ppId) return;
+  var valor = document.getElementById('pp-input-valor').value.trim();
+  var data  = document.getElementById('pp-input-data').value.trim();
+  var forma = document.getElementById('pp-input-forma').value;
+  var recebidoPor = document.getElementById('pp-input-recebido-por').value.trim();
+  var btn   = document.getElementById('pp-btn-registrar');
+  var status = document.getElementById('pp-status');
+
+  if (!valor) {
+    status.innerHTML = '<span style="color:var(--red);">❌ Informe o valor recebido</span>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Registrando...';
+  status.innerHTML = '';
+
+  fetch('/api/contatos/'+_ppId+'/pagamento-parcial', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({valor: valor, data_pagamento: data, forma_pagamento: forma, recebido_por: recebidoPor})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.ok) {
+      status.innerHTML = '<span style="color:var(--green);">✅ '+d.msg+(d.quitado?' — Cartela QUITADA! 🎉':'')+'</span>';
+      ppCarregarDados(_ppId);
+      document.getElementById('pp-input-valor').value = '';
+      document.getElementById('pp-input-recebido-por').value = '';
+      carregarGrid();
+      atualizarCards();
+      setTimeout(function(){
+        if (d.quitado) fecharPagamentoParcial();
+      }, 2000);
+    } else {
+      status.innerHTML = '<span style="color:var(--red);">❌ '+(d.msg||'Erro')+'</span>';
+    }
+    btn.disabled = false;
+    btn.textContent = '💰 Registrar pagamento';
+  })
+  .catch(function(){
+    status.innerHTML = '<span style="color:var(--red);">❌ Erro de conexão</span>';
+    btn.disabled = false;
+    btn.textContent = '💰 Registrar pagamento';
+  });
+}
+
 </script>
 
 
