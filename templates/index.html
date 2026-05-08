@@ -6741,11 +6741,11 @@ function mlEstornarPagamento(pagamentoId, contatoId) {
   .then(function(r){ return r.json(); })
   .then(function(d){
     if (d.ok) {
-      // Recarrega o modal com dados atualizados
-      mlAbrirPago(contatoId);
       mlCarregar();
       if (typeof carregarGrid === 'function') carregarGrid();
       atualizarCards();
+      // Reabre detalhes com dados atualizados
+      mlAbrirDetalhes(contatoId);
     } else {
       alert('Erro: ' + (d.msg||'Não foi possível estornar'));
     }
@@ -6845,6 +6845,12 @@ function mlAbrirDetalhes(id) {
           '<div style="margin-top:12px;background:var(--bg3);border-radius:8px;padding:10px 14px;font-size:0.85rem;color:var(--text2);"><span style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:4px;">Observações</span>' + (c.observacoes || '<span style="color:var(--text3);font-style:italic;">—</span>') + '</div>' +
         '</div>' +
 
+        // Seção Pagamentos Parciais
+        '<div id="det-pagamentos-wrap" style="margin-bottom:20px;display:none;">' +
+          '<div style="font-weight:700;font-size:0.85rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">💰 Histórico de Pagamentos</div>' +
+          '<div id="det-pagamentos-conteudo"></div>' +
+        '</div>' +
+
         // Seção Envios
         '<div style="margin-bottom:20px;">' +
           '<div style="font-weight:700;font-size:0.85rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">📨 Histórico de Disparos</div>' +
@@ -6893,6 +6899,62 @@ function mlAbrirDetalhes(id) {
         '</div>';
 
       document.getElementById('ml-detalhes-conteudo').innerHTML = html;
+
+      // Carrega pagamentos parciais
+      fetch('/api/contatos/' + id + '/pagamentos')
+        .then(function(r){ return r.json(); })
+        .then(function(pd){
+          if (!pd.ok || !pd.pagamentos || !pd.pagamentos.length) return;
+          var wrap = document.getElementById('det-pagamentos-wrap');
+          var cont = document.getElementById('det-pagamentos-conteudo');
+          if (!wrap || !cont) return;
+          wrap.style.display = 'block';
+
+          var valorTotal = pd.contato.valor_total || 0;
+          var valorPago  = pd.contato.valor_pago  || 0;
+          var saldo      = pd.contato.saldo_devedor || 0;
+
+          var resumo = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">' +
+            '<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;">' +
+              '<div style="font-size:0.68rem;color:var(--text3);">Valor total</div>' +
+              '<div style="font-weight:700;">R$ ' + valorTotal.toFixed(2).replace('.',',') + '</div>' +
+            '</div>' +
+            '<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;">' +
+              '<div style="font-size:0.68rem;color:var(--text3);">Total pago</div>' +
+              '<div style="font-weight:700;color:#22c55e;">R$ ' + valorPago.toFixed(2).replace('.',',') + '</div>' +
+            '</div>' +
+            '<div style="background:var(--bg3);border-radius:8px;padding:8px 10px;">' +
+              '<div style="font-size:0.68rem;color:var(--text3);">Saldo devedor</div>' +
+              '<div style="font-weight:700;color:#f97316;">R$ ' + saldo.toFixed(2).replace('.',',') + '</div>' +
+            '</div>' +
+          '</div>';
+
+          var tabela = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.78rem;">' +
+            '<thead><tr style="background:var(--bg3);">' +
+              '<th style="padding:7px 10px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);">Data</th>' +
+              '<th style="padding:7px 10px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);">Valor</th>' +
+              '<th style="padding:7px 10px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);">Forma</th>' +
+              '<th style="padding:7px 10px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);">Nome Pagador</th>' +
+              '<th style="padding:7px 10px;text-align:center;color:var(--text2);border-bottom:1px solid var(--border);">Estorno</th>' +
+            '</tr></thead><tbody>' +
+            pd.pagamentos.map(function(p, i){
+              var val = 'R$ ' + parseFloat(p.valor).toFixed(2).replace('.',',');
+              return '<tr style="border-bottom:1px solid var(--border);background:' + (i%2===0?'var(--bg2)':'var(--bg3)') + ';">' +
+                '<td style="padding:6px 10px;white-space:nowrap;color:var(--text3);">' + (p.data_pagamento||'—') + '</td>' +
+                '<td style="padding:6px 10px;font-weight:600;color:#22c55e;">' + val + '</td>' +
+                '<td style="padding:6px 10px;">' + (p.forma_pagamento||'—') + '</td>' +
+                '<td style="padding:6px 10px;">' + (p.recebido_por||'—') + '</td>' +
+                '<td style="padding:6px 10px;text-align:center;">' +
+                  '<button onclick="mlEstornarPagamento(' + p.id + ',' + pd.contato.id + ')" ' +
+                  'title="Estornar este pagamento" ' +
+                  'style="background:#ef444422;border:1px solid #ef444488;border-radius:6px;color:#ef4444;font-size:0.75rem;padding:3px 8px;cursor:pointer;font-family:inherit;">↩ Estornar</button>' +
+                '</td>' +
+              '</tr>';
+            }).join('') +
+            '</tbody></table></div>';
+
+          cont.innerHTML = resumo + tabela;
+        });
     });
 }
 
