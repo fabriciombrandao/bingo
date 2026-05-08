@@ -1389,6 +1389,83 @@ def api_desmembrar(cid):
     })
 
 
+@app.route("/api/contatos/<int:cid>/cancelar-desmembramento", methods=["POST"])
+@requer_login
+def api_cancelar_desmembramento(cid):
+    """Cancela o desmembramento de um lote, restaurando-o para Disponível.
+    Só é permitido se todas as cartelas filhas estiverem com status Disponível."""
+    # Verifica permissão
+    perfil = session.get("perfil", "")
+    if perfil != "admin":
+        usuarios = carregar_usuarios()
+        u = usuarios.get(session.get("usuario", ""), {})
+        botoes = u.get("permissoes", [])
+        if "btn-desmembrar" not in botoes:
+            return jsonify({"ok": False, "msg": "Sem permissão para cancelar desmembramento"}), 403
+
+    with get_db() as conn:
+        # Busca o lote original
+        row = conn.execute("SELECT * FROM contatos WHERE id=?", (cid,)).fetchone()
+        if not row:
+            return jsonify({"ok": False, "msg": "Registro não encontrado"})
+        c = dict(row)
+
+        # Valida que é um lote desmembrado
+        status = (c.get("status") or "").strip().lower()
+        if status != "desmembrado":
+            return jsonify({"ok": False, "msg": f"Este registro não está com status Desmembrado. Status atual: {c.get('status')}"}),
+
+        # Busca todas as cartelas filhas
+        filhas = conn.execute(
+            "SELECT * FROM contatos WHERE origem_id=?", (cid,)
+        ).fetchall()
+        filhas = [dict(f) for f in filhas]
+
+        if not filhas:
+            return jsonify({"ok": False, "msg": "Nenhuma cartela filha encontrada para este lote."})
+
+        # Verifica se todas estão Disponível
+        nao_disponiveis = [
+            f for f in filhas
+            if (f.get("status") or "").strip().lower() != "disponivel"
+        ]
+
+        if nao_disponiveis:
+            detalhes = ", ".join([
+                f"Cartela {f.get('intervalo','?')} ({f.get('status','?')})"
+                for f in nao_disponiveis
+            ])
+            return jsonify({
+                "ok": False,
+                "msg": f"Não é possível cancelar o desmembramento. {len(nao_disponiveis)} cartela(s) não estão disponíveis: {detalhes}"
+            })
+
+        now = datetime.now().strftime("%d/%m/%Y %H:%M")
+        qtd = len(filhas)
+
+        # Remove as cartelas filhas
+        conn.execute("DELETE FROM contatos WHERE origem_id=?", (cid,))
+
+        # Restaura o lote original para Disponível
+        conn.execute(
+            "UPDATE contatos SET status='Disponivel', atualizado_em=? WHERE id=?",
+            (now, cid)
+        )
+
+    # Audita
+    auditar("CANCELAMENTO_DESMEMBRAMENTO", contato_id=cid,
+            lote=c["lote"], intervalo=c.get("intervalo", ""),
+            nome=c.get("nome", ""), telefone=c.get("telefone", ""),
+            status_de="Desmembrado", status_para="Disponivel",
+            detalhes=f"{qtd} cartelas removidas — lote restaurado para Disponível")
+
+    log(f"Desmembramento do lote {c['lote']} cancelado por {session.get('usuario', '?')}", "success")
+    return jsonify({
+        "ok": True,
+        "msg": f"Desmembramento cancelado! Lote {c['lote']} restaurado para Disponível.",
+        "qtd_removidas": qtd
+    })
+
 
 @app.route("/api/contatos/lotes")
 @requer_login

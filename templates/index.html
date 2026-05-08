@@ -6448,6 +6448,33 @@ function carregarAuditoria(page) {
   </div>
 </div>
 
+<!-- MODAL CANCELAR DESMEMBRAMENTO -->
+<div id="modal-cancelar-desmembramento" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:2000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:480px;box-shadow:0 4px 32px rgba(15,23,42,0.18);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-size:1.05rem;font-weight:700;color:var(--text);">↩ Cancelar Desmembramento</div>
+      <button onclick="fecharCancelarDesmembramento()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:1rem;">✕</button>
+    </div>
+
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;font-size:0.85rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><span style="color:var(--text3);">Lote:</span> <b id="canc-desm-lote"></b></div>
+        <div><span style="color:var(--text3);">Intervalo:</span> <b id="canc-desm-intervalo"></b></div>
+      </div>
+    </div>
+
+    <div style="background:#ef444411;border:1px solid #ef444444;border-radius:8px;padding:12px;margin-bottom:18px;font-size:0.82rem;color:#ef4444;">
+      ⚠️ Esta ação irá <b>remover todas as cartelas desmembradas</b> e restaurar o lote original para <b>Disponível</b>. Só é permitido se todas as cartelas estiverem com status Disponível.
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="fecharCancelarDesmembramento()" style="padding:9px 20px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-family:inherit;font-size:0.88rem;">Voltar</button>
+      <button id="canc-desm-btn" onclick="confirmarCancelarDesmembramento()" style="padding:9px 20px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-family:inherit;font-size:0.88rem;font-weight:600;">↩ Confirmar Cancelamento</button>
+    </div>
+    <div id="canc-desm-status" style="margin-top:10px;font-size:0.82rem;text-align:center;"></div>
+  </div>
+</div>
+
 <div id="modal-vincular-lote" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:2000;align-items:center;justify-content:center;padding:20px;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;padding:24px;gap:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -7331,28 +7358,43 @@ function desmListaCarregar() {
   fetch('/api/grid/dados')
     .then(function(r){ return r.json(); })
     .then(function(d){
-      var disponiveis = (d.dados || []).filter(function(r){
+      var todos = d.dados || [];
+
+      // Lotes disponíveis para desmembrar
+      var disponiveis = todos.filter(function(r){
         var st = (r.status||'').toLowerCase();
-        // Só Disponível, sem origem_id (não é cartela filha), com intervalo "X a Y"
         return st === 'disponivel' && !r.origem_id && (r.intervalo||'').indexOf(' a ') >= 0;
+      });
+
+      // Lotes já desmembrados (para permitir cancelamento)
+      var desmembrados = todos.filter(function(r){
+        var st = (r.status||'').toLowerCase();
+        return st === 'desmembrado' && !r.origem_id;
       });
 
       if (busca) {
         disponiveis = disponiveis.filter(function(r){
           return [(r.lote||''),(r.intervalo||''),(r.valor||'')].join(' ').toLowerCase().indexOf(busca) >= 0;
         });
+        desmembrados = desmembrados.filter(function(r){
+          return [(r.lote||''),(r.intervalo||''),(r.valor||'')].join(' ').toLowerCase().indexOf(busca) >= 0;
+        });
       }
 
       var counter = document.getElementById('desm-lista-contador');
-      if (counter) counter.textContent = disponiveis.length + ' lote(s) disponível(is) para desmembrar';
+      if (counter) counter.textContent = disponiveis.length + ' para desmembrar · ' + desmembrados.length + ' desmembrado(s)';
 
-      if (!disponiveis.length) {
-        el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px;">Nenhum lote disponível para desmembrar.</div>';
+      if (!disponiveis.length && !desmembrados.length) {
+        el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px;">Nenhum lote encontrado.</div>';
         return;
       }
 
-      el.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;padding:12px;">' +
-        disponiveis.map(function(r){
+      var html = '<div style="display:flex;flex-direction:column;gap:8px;padding:12px;">';
+
+      // Seção: disponíveis para desmembrar
+      if (disponiveis.length) {
+        html += '<div style="font-size:0.75rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;padding:4px 2px;">🔀 Disponíveis para desmembrar</div>';
+        html += disponiveis.map(function(r){
           var partes = (r.intervalo||'').split(' a ');
           var qtd = partes.length === 2 ? (parseInt(partes[1]) - parseInt(partes[0]) + 1) : '?';
           var valorStr = (r.valor||'').replace(/[^\d,.]/g,'').replace(',','.');
@@ -7369,8 +7411,25 @@ function desmListaCarregar() {
             '</div>' +
             '<button onclick="abrirDesmembrar('+r.id+')" style="padding:6px 16px;border-radius:6px;border:none;background:#f59e0b;color:#fff;cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:600;flex-shrink:0;">🔀 Desmembrar</button>' +
           '</div>';
-        }).join('') +
-      '</div>';
+        }).join('');
+      }
+
+      // Seção: desmembrados (cancelamento)
+      if (desmembrados.length) {
+        html += '<div style="font-size:0.75rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;padding:12px 2px 4px;">↩ Desmembrados — cancelar</div>';
+        html += desmembrados.map(function(r){
+          return '<div style="background:var(--bg3);border:1px solid #ef444433;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">' +
+            '<div style="flex:1;">' +
+              '<div style="font-weight:700;">Lote <span style="color:var(--blue);">' + r.lote + '</span> — <span style="color:#8b5cf6;">' + (r.intervalo||'—') + '</span> <span style="font-size:0.75rem;background:#8b5cf622;color:#8b5cf6;border-radius:4px;padding:1px 7px;margin-left:4px;">Desmembrado</span></div>' +
+              '<div style="font-size:0.78rem;color:var(--text3);margin-top:3px;">Valor original: <b>' + (r.valor||'—') + '</b></div>' +
+            '</div>' +
+            '<button onclick="abrirCancelarDesmembramento('+r.id+',\''+r.lote+'\',\''+r.intervalo+'\')" style="padding:6px 16px;border-radius:6px;border:1px solid #ef4444;background:transparent;color:#ef4444;cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:600;flex-shrink:0;">↩ Cancelar</button>' +
+          '</div>';
+        }).join('');
+      }
+
+      html += '</div>';
+      el.innerHTML = html;
     })
     .catch(function(){
       el.innerHTML = '<div style="color:var(--red);padding:20px;">Erro ao carregar lotes.</div>';
@@ -7425,6 +7484,57 @@ function abrirDesmembrar(id) {
 function fecharDesmembrar() {
   document.getElementById('modal-desmembrar').style.display = 'none';
   _desmId = null;
+}
+
+var _cancDesmId = null;
+function abrirCancelarDesmembramento(id, lote, intervalo) {
+  _cancDesmId = id;
+  document.getElementById('canc-desm-lote').textContent = lote || '—';
+  document.getElementById('canc-desm-intervalo').textContent = intervalo || '—';
+  document.getElementById('canc-desm-status').innerHTML = '';
+  document.getElementById('canc-desm-btn').disabled = false;
+  document.getElementById('canc-desm-btn').textContent = '↩ Confirmar Cancelamento';
+  document.getElementById('modal-cancelar-desmembramento').style.display = 'flex';
+}
+
+function fecharCancelarDesmembramento() {
+  document.getElementById('modal-cancelar-desmembramento').style.display = 'none';
+  _cancDesmId = null;
+}
+
+function confirmarCancelarDesmembramento() {
+  if (!_cancDesmId) return;
+  var btn = document.getElementById('canc-desm-btn');
+  var status = document.getElementById('canc-desm-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ Processando...';
+  status.innerHTML = '';
+
+  fetch('/api/contatos/' + _cancDesmId + '/cancelar-desmembramento', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'}
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.ok) {
+      status.innerHTML = '<span style="color:var(--green);">✅ ' + d.msg + '</span>';
+      setTimeout(function(){
+        fecharCancelarDesmembramento();
+        desmListaCarregar();
+        carregarGrid();
+        atualizarCards();
+      }, 1500);
+    } else {
+      status.innerHTML = '<span style="color:var(--red);">❌ ' + (d.msg||'Erro') + '</span>';
+      btn.disabled = false;
+      btn.textContent = '↩ Confirmar Cancelamento';
+    }
+  })
+  .catch(function(){
+    status.innerHTML = '<span style="color:var(--red);">❌ Erro de conexão</span>';
+    btn.disabled = false;
+    btn.textContent = '↩ Confirmar Cancelamento';
+  });
 }
 
 function confirmarDesmembrar() {
