@@ -134,12 +134,15 @@ journalctl -u bingo -f
 - Criado symlink `bingo-update` em /usr/local/bin — roda de qualquer lugar no terminal
 - Ambiente de testes criado: https://dev.bingocoracaodemaria.cloud
   - /opt/bingo-dev porta 60081, serviço bingo-dev
+  - Banco separado: bingo-dev.db (cópia da produção, inode diferente)
   - SSL via Certbot, renovação automática
   - bingo-dev-update disponível globalmente
   - Fluxo: desenvolve/testa em dev → aprovado → bingo-update sobe para produção
+- Implementado cancelamento de desmembramento de lotes:
   - Backend: POST /api/contatos/<id>/cancelar-desmembramento
   - Valida que todas as cartelas filhas estão com status Disponivel
   - Se não estiver, retorna mensagem detalhando quais impedem o cancelamento
   - Remove cartelas filhas e restaura lote original para Disponivel
   - Registra na auditoria
   - Frontend: modal de desmembrar exibe seção extra com lotes desmembrados e botão ↩ Cancelar
+- Mockup de recebimento parcial aprovado — implementação pendente (próxima sessão)
