@@ -42,14 +42,14 @@
 ## 🔄 Fluxo de Desenvolvimento
 
 1. Claude clona o repo com token no início de cada sessão
-2. Claude edita os arquivos e faz `git push origin main`
-3. Fabricio roda `bingo-dev-update` para testar
-4. Aprovado → `bingo-update` sobe para produção ✅
+2. Claude edita os arquivos e faz `git push origin develop`
+3. Fabricio roda `bingo-dev-update` para testar em dev.bingocoracaodemaria.cloud
+4. Aprovado → merge para main e `bingo-update` sobe para produção ✅
 
 ### Início de sessão (Claude faz isso automaticamente)
 ```bash
 git clone https://TOKEN@github.com/fabriciombrandao/bingo.git /tmp/bingo
-cd /tmp/bingo
+cd /tmp/bingo && git checkout develop
 ```
 
 ---
