@@ -6810,10 +6810,12 @@ function confirmarEstorno() {
       _estornoId = null;
       _estornoContatoId = null;
       document.getElementById('modal-estorno').style.display = 'none';
+      document.getElementById('modal-ml-detalhes').style.display = 'none';
       mlCarregar();
       if (typeof carregarGrid === 'function') carregarGrid();
       atualizarCards();
-      if (cid) setTimeout(function(){ mlAbrirDetalhes(cid); }, 300);
+      alert('✅ Pagamento estornado com sucesso!');
+      if (cid) setTimeout(function(){ mlAbrirDetalhes(cid); }, 200);
     } else {
       document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ ' + (d.msg||'Erro') + '</span>';
       btn.disabled = false;
