@@ -6813,7 +6813,7 @@ function confirmarEstorno() {
       mlCarregar();
       if (typeof carregarGrid === 'function') carregarGrid();
       atualizarCards();
-      if (cid) mlAbrirDetalhes(cid);
+      if (cid) setTimeout(function(){ mlAbrirDetalhes(cid); }, 300);
     } else {
       document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ ' + (d.msg||'Erro') + '</span>';
       btn.disabled = false;
