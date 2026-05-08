@@ -6768,6 +6768,8 @@ function abrirModalEstorno(pagamentoId, contatoId) {
   _estornoContatoId = contatoId;
   document.getElementById('estorno-motivo').value = '';
   document.getElementById('estorno-msg').innerHTML = '';
+  document.getElementById('estorno-btn').disabled = false;
+  document.getElementById('estorno-btn').textContent = '↩ Confirmar Estorno';
   document.getElementById('modal-estorno').style.display = 'flex';
   setTimeout(function(){ document.getElementById('estorno-motivo').focus(); }, 100);
 }
@@ -6785,10 +6787,12 @@ function confirmarEstorno() {
     document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">⚠️ Informe o motivo do estorno</span>';
     return;
   }
-  var btn = document.getElementById('estorno-btn');
-  btn.disabled = true;
-  btn.textContent = '⏳ Estornando...';
-  fetch('/api/pagamentos-parciais/' + _estornoId + '/estornar', {
+  var pidEstorno = _estornoId;
+  _estornoId = null;
+  _estornoContatoId = null;
+  document.getElementById('estorno-btn').disabled = true;
+  document.getElementById('estorno-btn').textContent = '⏳ Estornando...';
+  fetch('/api/pagamentos-parciais/' + pidEstorno + '/estornar', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({motivo: motivo})
@@ -6796,18 +6800,19 @@ function confirmarEstorno() {
   .then(function(r){
     if (r.status === 401 || r.redirected) {
       document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ Sessão expirada — faça login novamente</span>';
-      btn.disabled = false;
-      btn.textContent = '↩ Confirmar Estorno';
+      document.getElementById('estorno-btn').disabled = false;
+      document.getElementById('estorno-btn').textContent = '↩ Confirmar Estorno';
       return null;
     }
     return r.json();
   })
   .then(function(d){
     if (!d) return;
+    document.getElementById('estorno-btn').disabled = false;
+    document.getElementById('estorno-btn').textContent = '↩ Confirmar Estorno';
+    document.getElementById('estorno-motivo').value = '';
+    document.getElementById('estorno-msg').innerHTML = '';
     if (d.ok) {
-      var cid = _estornoContatoId;
-      _estornoId = null;
-      _estornoContatoId = null;
       document.getElementById('modal-estorno').style.display = 'none';
       document.getElementById('modal-ml-detalhes').style.display = 'none';
       mlCarregar();
@@ -6815,14 +6820,12 @@ function confirmarEstorno() {
       atualizarCards();
     } else {
       document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ ' + (d.msg||'Erro') + '</span>';
-      btn.disabled = false;
-      btn.textContent = '↩ Confirmar Estorno';
     }
   })
   .catch(function(){
     document.getElementById('estorno-msg').innerHTML = '<span style="color:var(--red);">❌ Erro de conexão</span>';
-    btn.disabled = false;
-    btn.textContent = '↩ Confirmar Estorno';
+    document.getElementById('estorno-btn').disabled = false;
+    document.getElementById('estorno-btn').textContent = '↩ Confirmar Estorno';
   });
 }
 
