@@ -146,3 +146,28 @@ journalctl -u bingo -f
   - Registra na auditoria
   - Frontend: modal de desmembrar exibe seção extra com lotes desmembrados e botão ↩ Cancelar
 - Mockup de recebimento parcial aprovado — implementação pendente (próxima sessão)
+
+### Sessão 08/05/2026 — tarde
+- Implementado recebimento parcial integrado ao botão ✅ Marcar como Pago:
+  - Modal atualizado com campos: Valor Recebido → Data → Forma de Pagamento → Nome Pagador
+  - Validação: valor não pode ser maior que o saldo devedor
+  - Se valor < total → status vira "Pgto. Parcial" com aviso amarelo
+  - Se valor = total → status vira "Pago" normalmente
+  - Nova tabela: pagamentos_parciais (id, contato_id, valor, data, forma, recebido_por, estornado, motivo_estorno, estornado_em, estornado_por)
+  - Novos campos em contatos: valor_pago, saldo_devedor
+  - Backend: POST /api/contatos/<id>/pagamento-parcial
+  - Status "Pgto. Parcial" com badge laranja na grade
+- Coluna Saldo na grade Manutenção de Lotes (visível para registros Pgto. Parcial)
+- Histórico de pagamentos nos Detalhes do Contato (💰 Histórico de Pagamentos)
+  - Exibe: data, valor, forma, nome pagador, estornos
+  - Pagamentos estornados aparecem riscados com motivo e data do estorno
+- Estorno de pagamento:
+  - Acessível apenas nos Detalhes do Contato (não no modal de pagamento)
+  - Abre modal pedindo motivo obrigatório
+  - Registro não é deletado — marcado como estornado para auditoria
+  - Recalcula saldo e status automaticamente (Pendente / Pgto. Parcial / Pago)
+  - Backend: POST /api/pagamentos-parciais/<id>/estornar
+  - Após estorno recarrega os detalhes automaticamente
+- Ambiente de testes corrigido:
+  - bingo-dev-update movido para /usr/local/bin como arquivo independente (não mais symlink)
+  - Script usa git reset --hard origin/develop para evitar conflitos
