@@ -3948,7 +3948,7 @@ EQUIPES_CAMISETA = [
     'Maria Izabel', 'Doces', 'Espaço Criança', 'Leilão', 'Apresentação Cultural',
     'Montagem', 'Ornamentação Cultural', 'Limpeza', 'Segurança / Estacionamento',
     'Camisetas', 'Vendas', 'Pascom e Comunicação Visual', 'Coordenação Geral',
-    'Liturgia',
+    'Liturgia', 'Loja Adorai',
 ]
 
 def _normalizar_texto(texto: str) -> str:
