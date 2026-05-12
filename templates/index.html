@@ -8325,6 +8325,8 @@ function _corNum(n) {
 var _camDados    = [];
 var _camFiltrado = [];
 var _camSelecionados = new Set();
+var _camSortCol  = 'numero_pedido';
+var _camSortAsc  = false;
 var _camRelLinhas   = [];
 var TAMANHOS_CAM = ['N0','N2','N4','N6','N8','PP','P','M','G','GG','EXG','EXGG'];
 var TAMANHOS_LABEL = {PP:'PP',P:'P',M:'M',G:'G',GG:'GG',EXG:'EXG',EXGG:'EXGG',N0:'Nº 0',N2:'Nº 2',N4:'Nº 4',N6:'Nº 6',N8:'Nº 8'};
@@ -8381,6 +8383,35 @@ function camFiltrar() {
     if(busca){var h=[(p.nome||''),(p.cpf||''),(p.numero_pedido||'')].join(' ').toLowerCase(); if(h.indexOf(busca)<0) return false;}
     return true;
   });
+  // aplica ordenação ativa
+  camOrdenar(_camSortCol, false);
+}
+
+function camOrdenar(col, forceToggle) {
+  if (forceToggle !== false) {
+    if (_camSortCol === col) { _camSortAsc = !_camSortAsc; }
+    else { _camSortCol = col; _camSortAsc = true; }
+  }
+  var dir = _camSortAsc ? 1 : -1;
+  _camFiltrado.sort(function(a, b) {
+    var va, vb;
+    if (col === 'numero_pedido') {
+      va = parseInt((a.numero_pedido||'').replace(/\D/g,'')) || 0;
+      vb = parseInt((b.numero_pedido||'').replace(/\D/g,'')) || 0;
+    } else if (col === 'valor') {
+      va = _val(a.tamanho)+(a.adicionais||[]).reduce(function(s,x){return s+_val(x.tamanho);},0);
+      vb = _val(b.tamanho)+(b.adicionais||[]).reduce(function(s,x){return s+_val(x.tamanho);},0);
+    } else if (col === 'tamanho') {
+      va = TAMANHOS_CAM.indexOf(a.tamanho); if(va<0) va=99;
+      vb = TAMANHOS_CAM.indexOf(b.tamanho); if(vb<0) vb=99;
+    } else {
+      va = (a[col]||'').toString().toLowerCase();
+      vb = (b[col]||'').toString().toLowerCase();
+    }
+    if (va < vb) return -dir;
+    if (va > vb) return dir;
+    return 0;
+  });
   camRenderizar();
 }
 
@@ -8398,12 +8429,27 @@ function camRenderizar() {
     ativos+' pedidos ativos | '+totalCamAtivos+' camisetas | '+pagos+' pagos'+(cancelados?' | '+cancelados+' cancelados':'');
   if(!total){document.getElementById('cam-tabela').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Nenhum pedido.</div>';return;}
 
+  var _thC = function(label, col) {
+    var icon = _camSortCol===col ? (_camSortAsc ? ' ▲' : ' ▼') : ' ↕';
+    return '<th onclick="camOrdenar(\''+col+'\')" style="padding:8px 8px;text-align:left;color:var(--text2);white-space:nowrap;cursor:pointer;user-select:none;" title="Ordenar por '+label+'">'+label+'<span style="font-size:0.65rem;opacity:0.6;">'+icon+'</span></th>';
+  };
+  var _thP = function(label) {
+    return '<th style="padding:8px 8px;text-align:left;color:var(--text2);white-space:nowrap;">'+label+'</th>';
+  };
   var html='<table style="width:100%;border-collapse:collapse;font-size:0.79rem;">' +
     '<thead><tr style="background:var(--bg3);">' +
     '<th style="padding:8px 8px;"><input type="checkbox" onchange="camSelecionarTodos(this)"></th>' +
-    ['N&#186;','CPF','Nome','Equipe','Tel','Tam','Valor','Pgto','Entrega','A&#231;&#245;es'].map(function(h){
-      return '<th style="padding:8px 8px;text-align:left;color:var(--text2);white-space:nowrap;">'+h+'</th>';
-    }).join('') + '</tr></thead><tbody>';
+    _thC('N°','numero_pedido') +
+    _thC('CPF','cpf') +
+    _thC('Nome','nome') +
+    _thC('Equipe','equipe') +
+    _thC('Tel','telefone') +
+    _thC('Tam','tamanho') +
+    _thC('Valor','valor') +
+    _thC('Pgto','status_pagamento') +
+    _thP('Entrega') +
+    _thP('Ações') +
+    '</tr></thead><tbody>';
 
   _camFiltrado.forEach(function(p,i){
     var sel=_camSelecionados.has(p.id);
