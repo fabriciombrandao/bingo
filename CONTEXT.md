@@ -101,7 +101,8 @@ origem_id: NULL=lote normal, preenchido=cartela desmembrada
 systemctl restart bingo
 systemctl status bingo
 journalctl -u bingo -f
-/opt/bingo/update.sh     # deploy: git pull + restart
+bingo-update        # deploy produção (git pull + restart) — roda de qualquer lugar
+bingo-dev-update    # deploy testes
 ```
 
 ---
@@ -146,3 +147,14 @@ journalctl -u bingo -f
   - Registra na auditoria
   - Frontend: modal de desmembrar exibe seção extra com lotes desmembrados e botão ↩ Cancelar
 - Mockup de recebimento parcial aprovado — implementação pendente (próxima sessão)
+
+### Sessão 12/05/2026
+- Implementada ordenação por coluna na tabela de camisetas (index.html)
+  - Colunas clicáveis: N°, CPF, Nome, Equipe, Tel, Tam, Valor, Pgto
+  - Indicador visual: ↕ (sem ordem), ▲ (asc), ▼ (desc)
+  - Tamanho ordena pela sequência lógica (PP < P < M < G < GG...)
+  - Valor ordena pelo valor real calculado, não pelo texto
+  - Ordenação padrão: N° pedido decrescente (mais recentes primeiro)
+  - Ordenação persiste ao filtrar
+- Corrigido CONTEXT.md: comandos de update (`bingo-update` e `bingo-dev-update`)
+- Configurada memória automática do Claude: ao iniciar sessão do projeto Bingo, Claude clona o repo e lê o CONTEXT.md automaticamente sem precisar ser lembrado
