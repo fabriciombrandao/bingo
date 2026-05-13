@@ -8160,6 +8160,9 @@ function _corNum(n) {
           <button onclick="camTamCarregar()" style="background:#2563eb;border:none;color:#fff;padding:7px 16px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128260; Atualizar</button>
           <button onclick="camTamExportarExcel()" style="background:#16a34a;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128229; Excel</button>
           <button onclick="camTamPreview()" style="background:#7c3aed;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128065; Preview/PDF</button>
+          <label style="font-size:0.8rem;color:var(--text3);display:flex;align-items:center;gap:5px;cursor:pointer;margin-left:4px;">
+            <input type="checkbox" id="cam-tam-sem-valores" style="width:auto;"> Sem valores
+          </label>
         </div>
         <div id="cam-tam-conteudo"><div style="text-align:center;padding:40px;color:var(--text3);">Clique em Atualizar para carregar.</div></div>
       </div>
@@ -9436,12 +9439,15 @@ function camTamCarregar() {
 
 function camTamExportarExcel() {
   if (!_camTamDados) { alert('Clique em Atualizar primeiro.'); return; }
+  var semValores = document.getElementById('cam-tam-sem-valores') && document.getElementById('cam-tam-sem-valores').checked;
   var TAMS = ['N0','N2','N4','N6','N8','PP','P','M','G','GG','EXG','EXGG'];
-  function brl(v){ return parseFloat(v||0).toFixed(2).replace('.',','); }
-  var rows = [['Tamanho','Lote','N° Pedido','Nome','Equipe','Telefone','Status','Tipo']];
+  var rows = [semValores ? ['Tamanho','Lote','N° Pedido','Nome','Equipe','Telefone','Tipo'] : ['Tamanho','Lote','N° Pedido','Nome','Equipe','Telefone','Status','Tipo']];
   TAMS.forEach(function(t){
     (_camTamDados.grupos[t]||[]).forEach(function(p){
-      rows.push([t, 'L'+(p.lote||1), p.num, p.nome, p.equipe||'', p.telefone, p.status, p.tipo]);
+      var row = [t, 'L'+(p.lote||1), p.num, p.nome, p.equipe||'', p.telefone];
+      if (!semValores) row.push(p.status);
+      row.push(p.tipo);
+      rows.push(row);
     });
   });
   var bom = '﻿';
@@ -9461,10 +9467,12 @@ function camTamPreview() {
   function brl(v){ return 'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
   var TAMS = ['N0','N2','N4','N6','N8','PP','P','M','G','GG','EXG','EXGG'];
 
+  var semValores = document.getElementById('cam-tam-sem-valores') && document.getElementById('cam-tam-sem-valores').checked;
   // Resumo
+  var resumoCols = semValores ? ['Tamanho','Total','Pagos','Pendentes'] : ['Tamanho','Total','Pagos','Pendentes','Valor Total'];
   var resumoHtml = '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">' +
     '<thead><tr style="background:#1d4ed8;color:#fff;">' +
-    ['Tamanho','Total','Pagos','Pendentes','Valor Total'].map(function(h){return '<th style="padding:5px 8px;text-align:left;font-size:10px;">'+h+'</th>';}).join('') +
+    resumoCols.map(function(h){return '<th style="padding:5px 8px;text-align:left;font-size:10px;">'+h+'</th>';}).join('') +
     '</tr></thead><tbody>';
   d.resumoTotal.forEach(function(r,i){
     resumoHtml += '<tr style="background:'+(i%2===0?'#fff':'#f8fafc')+';border-bottom:1px solid #e2e8f0;">' +
@@ -9472,7 +9480,7 @@ function camTamPreview() {
       '<td style="padding:5px 8px;font-weight:700;font-size:9px;">'+r.total+'</td>' +
       '<td style="padding:5px 8px;color:#166534;font-size:9px;">'+r.pagos+'</td>' +
       '<td style="padding:5px 8px;color:#92400e;font-size:9px;">'+r.pend+'</td>' +
-      '<td style="padding:5px 8px;font-size:9px;">'+brl(r.valTot)+'</td>' +
+      (semValores ? '' : '<td style="padding:5px 8px;font-size:9px;">'+brl(r.valTot)+'</td>') +
     '</tr>';
   });
   resumoHtml += '<tr style="background:#f1f5f9;font-weight:700;border-top:2px solid #cbd5e1;">' +
@@ -9480,7 +9488,7 @@ function camTamPreview() {
     '<td style="padding:5px 8px;font-size:9px;">'+d.totalGeral+'</td>' +
     '<td style="padding:5px 8px;color:#166534;font-size:9px;">'+d.pagosGeral+'</td>' +
     '<td style="padding:5px 8px;color:#92400e;font-size:9px;">'+d.pendGeral+'</td>' +
-    '<td style="padding:5px 8px;font-size:9px;">'+brl(d.valGeral)+'</td>' +
+    (semValores ? '' : '<td style="padding:5px 8px;font-size:9px;">'+brl(d.valGeral)+'</td>') +
   '</tr></tbody></table>';
 
   // Listagem
@@ -9492,7 +9500,7 @@ function camTamPreview() {
       'Tamanho '+r.tam+' — '+r.total+' camiseta'+(r.total>1?'s':'')+'</div>' +
       '<table style="width:100%;border-collapse:collapse;">' +
       '<thead><tr style="background:#e0e7ff;">' +
-      ['Lote','N° Pedido','Nome','Equipe','Telefone','Status','Tipo'].map(function(h){return '<th style="padding:4px 8px;text-align:left;font-size:8px;color:#1e40af;">'+h+'</th>';}).join('') +
+      (semValores ? ['Lote','N° Pedido','Nome','Equipe','Telefone','Tipo'] : ['Lote','N° Pedido','Nome','Equipe','Telefone','Status','Tipo']).map(function(h){return '<th style="padding:4px 8px;text-align:left;font-size:8px;color:#1e40af;">'+h+'</th>';}).join('') +
       '</tr></thead><tbody>';
     lista.forEach(function(p,i){
       listaHtml += '<tr style="background:'+(i%2===0?'#fff':'#f8fafc')+';border-bottom:1px solid #e2e8f0;">' +
@@ -9501,7 +9509,7 @@ function camTamPreview() {
         '<td style="padding:4px 8px;font-size:8px;font-weight:600;">'+p.nome+'</td>' +
         '<td style="padding:4px 8px;font-size:8px;color:#475569;">'+( p.equipe||'')+'</td>' +
         '<td style="padding:4px 8px;font-size:8px;">'+p.telefone+'</td>' +
-        '<td style="padding:4px 8px;font-size:8px;color:'+(p.status==='Pago'?'#166534':'#92400e')+';">'+p.status+'</td>' +
+        (semValores ? '' : '<td style="padding:4px 8px;font-size:8px;color:'+(p.status==='Pago'?'#166534':'#92400e')+';">'+p.status+'</td>') +
         '<td style="padding:4px 8px;font-size:8px;color:'+(p.tipo==='Adicional'?'#6d28d9':'#1d4ed8')+';">'+p.tipo+'</td>' +
       '</tr>';
     });
