@@ -8459,6 +8459,7 @@ function camRenderizar() {
   var html='<table style="width:100%;border-collapse:collapse;font-size:0.79rem;">' +
     '<thead><tr style="background:var(--bg3);">' +
     '<th style="padding:8px 8px;"><input type="checkbox" onchange="camSelecionarTodos(this)"></th>' +
+    _thC('Lote','lote') +
     _thC('N°','numero_pedido') +
     _thC('CPF','cpf') +
     _thC('Nome','nome') +
@@ -8466,7 +8467,6 @@ function camRenderizar() {
     _thC('Tel','telefone') +
     _thC('Tam','tamanho') +
     _thC('Valor','valor') +
-    _thC('Lote','lote') +
     _thC('Pgto','status_pagamento') +
     _thP('Entrega') +
     _thP('Ações') +
@@ -8508,6 +8508,7 @@ function camRenderizar() {
     }
     html+='<tr id="'+rowId+'" style="border-bottom:1px solid var(--border);background:'+(i%2===0?'var(--bg2)':'var(--bg3)')+';">' +
       '<td style="padding:6px 8px;"><input type="checkbox"'+(sel?' checked':'')+' onchange="camToggle('+p.id+',this)"></td>' +
+      '<td style="padding:6px 8px;text-align:center;"><span style="background:#6366f122;color:#6366f1;padding:2px 8px;border-radius:99px;font-size:0.7rem;font-weight:700;">L'+(p.lote||1)+'</span></td>' +
       '<td style="padding:6px 8px;font-size:0.74rem;white-space:nowrap;">'+(p.numero_pedido||'')+'</td>' +
       '<td style="padding:6px 8px;font-size:0.74rem;">'+cpfFmt+'</td>' +
       '<td style="padding:6px 8px;font-weight:600;">'+p.nome+btnExpand+'</td>' +
@@ -8524,7 +8525,6 @@ function camRenderizar() {
         }
         return '<td style="padding:6px 8px;">'+html+'</td>';
       }()) +
-      '<td style="padding:6px 8px;text-align:center;"><span style="background:#6366f122;color:#6366f1;padding:2px 8px;border-radius:99px;font-size:0.7rem;font-weight:700;">L'+(p.lote||1)+'</span></td>' +
       '<td style="padding:6px 8px;">'+btnPagar+'</td>' +
       '<td style="padding:6px 8px;">'+entregaBadge+'</td>' +
       '<td style="padding:6px 8px;white-space:nowrap;">' +
