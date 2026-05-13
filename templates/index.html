@@ -8568,7 +8568,10 @@ function camAbrirInfo(id) {
   var stCor = p.status_pagamento==='Pago'?'#22c55e':p.status_pagamento==='Cancelado'?'#64748b':'#f59e0b';
   var html =
     '<div style="background:var(--bg3);border-radius:8px;padding:12px 14px;margin-bottom:14px;">' +
-      '<div style="font-size:1rem;font-weight:700;color:var(--blue);">' + (p.numero_pedido||'S/N') + '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<div style="font-size:1rem;font-weight:700;color:var(--blue);">' + (p.numero_pedido||'S/N') + '</div>' +
+        '<span style="background:#6366f122;color:#6366f1;padding:2px 9px;border-radius:99px;font-size:0.75rem;font-weight:700;">Lote '+(p.lote||1)+'</span>' +
+      '</div>' +
       '<div style="font-size:0.8rem;color:var(--text3);">Cadastrado em: ' + (p.criado_em||'') + '</div>' +
     '</div>' +
     row('Nome', p.nome) +
