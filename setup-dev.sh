@@ -104,8 +104,10 @@ fi
 ls -t "$BACKUP_DIR"/bingo_dev_*.db 2>/dev/null | tail -n +8 | xargs -r rm
 
 # Puxa do GitHub
-echo "🔄 Atualizando código..."
-git pull origin main
+echo "🔄 Atualizando código (branch main)..."
+git fetch origin
+git checkout main
+git reset --hard origin/main
 
 # Ajusta porta e banco para dev
 sed -i 's/port=60080/port=60081/' /opt/bingo-dev/app.py
