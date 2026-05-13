@@ -4186,6 +4186,7 @@ def api_camisetas_salvar():
             'ok': True,
             'pid': pid,
             'numero_pedido': num_pedido_final,
+            'lote': lote_vigente,
             'total': total_fmt,
             'total_num': total,
             'chave_pix': cfg['chave_pix'],

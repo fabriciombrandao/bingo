@@ -651,7 +651,8 @@ function exibirConfirmacao(d, nome, tam, adds) {
   var msgPedido = document.getElementById('msg-pedido-realizado');
   if (msgPedido) {
     var numPed = d.numero_pedido || '';
-    var txtMsg = '<b>Pedido N. ' + numPed + ', realizado!</b><br>' +
+    var loteStr = d.lote ? ' &nbsp;<span style="background:#6366f122;color:#6366f1;padding:2px 9px;border-radius:99px;font-size:0.82rem;font-weight:700;">Lote ' + d.lote + '</span>' : '';
+    var txtMsg = '<b>Pedido N. ' + numPed + ', realizado!</b>' + loteStr + '<br>' +
       'O pedido será confirmado mediante entrada de 50% ou valor integral.<br>' +
       (celFmt ? 'Em caso de dúvidas contactar: <b>&#128241; ' + celFmt + '</b>' : '');
     msgPedido.innerHTML = txtMsg;
