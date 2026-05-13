@@ -9291,7 +9291,7 @@ function camTamCarregar() {
       if (grupos[t] !== undefined) {
         grupos[t].push({
           num: p.numero_pedido||'—', nome: p.nome, equipe: p.equipe||'', telefone: p.telefone,
-          status: p.status_pagamento, tipo: 'Principal',
+          status: p.status_pagamento, tipo: 'Principal', lote: p.lote||1,
           _val: val(t)
         });
       }
@@ -9300,7 +9300,7 @@ function camTamCarregar() {
         if (grupos[ta] !== undefined) {
           grupos[ta].push({
             num: p.numero_pedido||'—', nome: a.nome, equipe: p.equipe||'', telefone: a.telefone,
-            status: p.status_pagamento, tipo: 'Adicional',
+            status: p.status_pagamento, tipo: 'Adicional', lote: p.lote||1,
             _val: val(ta)
           });
         }
@@ -9369,7 +9369,7 @@ function camTamCarregar() {
         ' <span style="font-weight:400;opacity:0.85;">('+r.pagos+' pago'+(r.pagos!==1?'s':'')+' · '+r.pend+' pendente'+(r.pend!==1?'s':'')+')</span></div>';
       html += '<table style="width:100%;border-collapse:collapse;font-size:0.8rem;">';
       html += '<thead><tr style="background:var(--bg3);">' +
-        ['N° Pedido','Nome','Equipe','Telefone','Status','Tipo'].map(function(h){
+        ['Lote','N° Pedido','Nome','Equipe','Telefone','Status','Tipo'].map(function(h){
           return '<th style="padding:6px 10px;text-align:left;color:var(--text2);">'+h+'</th>';
         }).join('') + '</tr></thead><tbody>';
 
@@ -9380,6 +9380,7 @@ function camTamCarregar() {
         var tipoCor = p.tipo==='Adicional'?'#8b5cf6':'#3b82f6';
         var tipoBadge = '<span style="background:'+tipoCor+'22;color:'+tipoCor+';padding:1px 7px;border-radius:99px;font-size:0.72rem;">'+p.tipo+'</span>';
         html += '<tr style="border-bottom:1px solid var(--border);background:'+bg+';">' +
+          '<td style="padding:6px 10px;"><span style="background:#6366f122;color:#6366f1;padding:1px 7px;border-radius:99px;font-size:0.72rem;font-weight:700;">L'+(p.lote||1)+'</span></td>' +
           '<td style="padding:6px 10px;font-size:0.82rem;">'+p.num+'</td>' +
           '<td style="padding:6px 10px;font-size:0.82rem;font-weight:600;">'+p.nome+'</td>' +
           '<td style="padding:6px 10px;font-size:0.82rem;color:var(--text3);">'+( p.equipe||'&#8212;')+'</td>' +
@@ -9399,10 +9400,10 @@ function camTamExportarExcel() {
   if (!_camTamDados) { alert('Clique em Atualizar primeiro.'); return; }
   var TAMS = ['N0','N2','N4','N6','N8','PP','P','M','G','GG','EXG','EXGG'];
   function brl(v){ return parseFloat(v||0).toFixed(2).replace('.',','); }
-  var rows = [['Tamanho','N° Pedido','Nome','Equipe','Telefone','Status','Tipo']];
+  var rows = [['Tamanho','Lote','N° Pedido','Nome','Equipe','Telefone','Status','Tipo']];
   TAMS.forEach(function(t){
     (_camTamDados.grupos[t]||[]).forEach(function(p){
-      rows.push([t, p.num, p.nome, p.equipe||'', p.telefone, p.status, p.tipo]);
+      rows.push([t, 'L'+(p.lote||1), p.num, p.nome, p.equipe||'', p.telefone, p.status, p.tipo]);
     });
   });
   var bom = '﻿';
@@ -9453,10 +9454,11 @@ function camTamPreview() {
       'Tamanho '+r.tam+' — '+r.total+' camiseta'+(r.total>1?'s':'')+'</div>' +
       '<table style="width:100%;border-collapse:collapse;">' +
       '<thead><tr style="background:#e0e7ff;">' +
-      ['N° Pedido','Nome','Equipe','Telefone','Status','Tipo'].map(function(h){return '<th style="padding:4px 8px;text-align:left;font-size:8px;color:#1e40af;">'+h+'</th>';}).join('') +
+      ['Lote','N° Pedido','Nome','Equipe','Telefone','Status','Tipo'].map(function(h){return '<th style="padding:4px 8px;text-align:left;font-size:8px;color:#1e40af;">'+h+'</th>';}).join('') +
       '</tr></thead><tbody>';
     lista.forEach(function(p,i){
       listaHtml += '<tr style="background:'+(i%2===0?'#fff':'#f8fafc')+';border-bottom:1px solid #e2e8f0;">' +
+        '<td style="padding:4px 8px;font-size:8px;color:#6366f1;font-weight:700;">L'+(p.lote||1)+'</td>' +
         '<td style="padding:4px 8px;font-size:8px;">'+p.num+'</td>' +
         '<td style="padding:4px 8px;font-size:8px;font-weight:600;">'+p.nome+'</td>' +
         '<td style="padding:4px 8px;font-size:8px;color:#475569;">'+( p.equipe||'')+'</td>' +
