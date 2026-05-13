@@ -8148,6 +8148,9 @@ function _corNum(n) {
       <!-- ABA POR TAMANHO -->
       <div id="cam-aba-tamanho" style="display:none;">
         <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;">
+          <select id="cam-tam-lote" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:2px solid #6366f1;background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos os lotes</option>
+          </select>
           <button onclick="camTamCarregar()" style="background:#2563eb;border:none;color:#fff;padding:7px 16px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128260; Atualizar</button>
           <button onclick="camTamExportarExcel()" style="background:#16a34a;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128229; Excel</button>
           <button onclick="camTamPreview()" style="background:#7c3aed;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128065; Preview/PDF</button>
