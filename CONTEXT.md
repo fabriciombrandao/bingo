@@ -148,6 +148,15 @@ bingo-dev-update    # deploy testes
   - Frontend: modal de desmembrar exibe seção extra com lotes desmembrados e botão ↩ Cancelar
 - Mockup de recebimento parcial aprovado — implementação pendente (próxima sessão)
 
+### Sessão 13/05/2026
+- Implementado controle de lote para camisetas:
+  - Migration: coluna `lote INTEGER DEFAULT 1` em `camisetas_pedidos` (pedidos existentes ficam lote 1)
+  - Config: nova chave `camisetas_lote_vigente` (padrão 1) — novos pedidos recebem o lote vigente
+  - Config admin: campo "Lote vigente" com destaque visual roxo
+  - Aba Pedidos: filtro por lote (select populado dinamicamente) + coluna Lote na tabela (badge L1, L2...)
+  - Aba Resumo: seletor de lote próprio, filtra totais por tamanho do lote selecionado
+  - Aba Relatório: filtro por lote + coluna Lote nos resultados, preview/PDF e export Excel
+
 ### Sessão 12/05/2026
 - Implementada ordenação por coluna na tabela de camisetas (index.html)
   - Colunas clicáveis: N°, CPF, Nome, Equipe, Tel, Tam, Valor, Pgto
