@@ -276,7 +276,6 @@ def init_db():
             )""",
             "ALTER TABLE camisetas_pedidos ADD COLUMN comprovante_tipo TEXT DEFAULT ''",
             "ALTER TABLE camisetas_pedidos ADD COLUMN comprovante_em TEXT DEFAULT ''",
-            "ALTER TABLE camisetas_pedidos ADD COLUMN lote INTEGER DEFAULT 1",
 
         ]:
             try: conn.execute(sql)
@@ -4135,10 +4134,9 @@ def api_camisetas_salvar():
                 acao_audit = 'CAM_EDICAO_PUBLICA'
             else:
                 num_pedido = _proximo_numero_pedido(conn)
-                lote_vigente = int(carregar_config().get('camisetas_lote_vigente', '1'))
                 cur = conn.execute(
-                    'INSERT INTO camisetas_pedidos (cpf,nome,telefone,tamanho,data_nascimento,equipe,obs_cadastro,numero_pedido,status_pagamento,criado_em,atualizado_em,lote) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-                    (cpf, nome, tel, tam, dt_nasc, equipe, obs_cadastro, num_pedido, 'Realizado', now, now, lote_vigente)
+                    'INSERT INTO camisetas_pedidos (cpf,nome,telefone,tamanho,data_nascimento,equipe,obs_cadastro,numero_pedido,status_pagamento,criado_em,atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+                    (cpf, nome, tel, tam, dt_nasc, equipe, obs_cadastro, num_pedido, 'Realizado', now, now)
                 )
                 pid = cur.lastrowid
                 acao_audit = 'CAM_CADASTRO'
@@ -4209,7 +4207,7 @@ def api_camisetas_lista():
             '''SELECT id,cpf,numero_pedido,nome,telefone,tamanho,data_nascimento,equipe,
                status_pagamento,forma_pagamento,data_pagamento,obs_cadastro,obs_pagamento,
                entregue,data_entrega,obs_entrega,criado_em,atualizado_em,valor_pago,
-               comprovante_tipo,comprovante_em,lote,
+               comprovante_tipo,comprovante_em,
                CASE WHEN comprovante_base64 IS NOT NULL AND comprovante_base64 != '' THEN 1 ELSE 0 END as tem_comprovante
                FROM camisetas_pedidos ORDER BY criado_em DESC'''
         ).fetchall()
@@ -4523,27 +4521,17 @@ def api_camisetas_cancelar():
 @app.route('/api/camisetas/resumo-tamanhos')
 @requer_login
 def api_camisetas_resumo_tamanhos():
-    """Totais por tamanho (principal + adicionais), com filtro opcional por lote."""
-    lote = request.args.get('lote', '', type=str).strip()
+    """Totais por tamanho (principal + adicionais)."""
     with get_db() as conn:
-        if lote:
-            peds = conn.execute('SELECT tamanho, status_pagamento FROM camisetas_pedidos WHERE CAST(lote AS TEXT)=?', (lote,)).fetchall()
-            adds = conn.execute(
-                'SELECT ca.tamanho, cp.status_pagamento FROM camisetas_adicionais ca '
-                'JOIN camisetas_pedidos cp ON ca.pedido_id=cp.id WHERE CAST(cp.lote AS TEXT)=?', (lote,)
-            ).fetchall()
-        else:
-            peds = conn.execute('SELECT tamanho, status_pagamento FROM camisetas_pedidos').fetchall()
-            adds = conn.execute(
-                'SELECT ca.tamanho, cp.status_pagamento FROM camisetas_adicionais ca '
-                'JOIN camisetas_pedidos cp ON ca.pedido_id=cp.id'
-            ).fetchall()
-        # Lista de lotes distintos
-        lotes = [r[0] for r in conn.execute('SELECT DISTINCT lote FROM camisetas_pedidos WHERE lote IS NOT NULL ORDER BY lote').fetchall()]
+        peds = conn.execute('SELECT tamanho, status_pagamento FROM camisetas_pedidos').fetchall()
+        adds = conn.execute(
+            'SELECT ca.tamanho, cp.status_pagamento FROM camisetas_adicionais ca '
+            'JOIN camisetas_pedidos cp ON ca.pedido_id=cp.id'
+        ).fetchall()
     contagem = {t: {'total': 0, 'pago': 0, 'pendente': 0} for t in TAMANHOS_CAMISETA}
     for r in list(peds) + list(adds):
         if r['status_pagamento'] == 'Cancelado':
-            continue
+            continue  # cancelados não entram nos totais por tamanho
         t = (r['tamanho'] or '').upper()
         if t in contagem:
             contagem[t]['total'] += 1
@@ -4552,7 +4540,7 @@ def api_camisetas_resumo_tamanhos():
             else:
                 contagem[t]['pendente'] += 1
     cfg = _cfg_camisetas()
-    return jsonify({'ok': True, 'resumo': contagem, 'tamanhos': TAMANHOS_CAMISETA, 'valores': cfg['valores'], 'lotes': lotes})
+    return jsonify({'ok': True, 'resumo': contagem, 'tamanhos': TAMANHOS_CAMISETA, 'valores': cfg['valores']})
 
 @app.route('/api/camisetas/config-admin', methods=['GET'])
 @requer_login
@@ -4570,7 +4558,6 @@ def api_camisetas_config_admin_get():
         'valores':        {t: cfg.get(f'camisetas_valor_{t}', '') for t in TAMANHOS_CAMISETA},
         'tem_foto_frente': bool(cfg.get('camisetas_foto_frente')),
         'tem_foto_verso':  bool(cfg.get('camisetas_foto_verso')),
-        'lote_vigente':    int(cfg.get('camisetas_lote_vigente', '1')),
     })
 
 @app.route('/api/camisetas/config-admin', methods=['POST'])
@@ -4580,7 +4567,7 @@ def api_camisetas_config_admin_post():
     cfg = carregar_config()
     campos = ['camisetas_ativo','camisetas_data_inicio','camisetas_data_fim',
               'camisetas_chave_pix','camisetas_beneficiario','camisetas_descricao',
-              'camisetas_celular_comprovante','camisetas_lote_vigente']
+              'camisetas_celular_comprovante']
     for c in campos:
         if c in d:
             cfg[c] = str(d[c])
