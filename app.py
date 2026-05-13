@@ -4117,6 +4117,7 @@ def api_camisetas_salvar():
             return jsonify({'ok': False, 'erro': 'Selecione uma equipe válida.'})
 
         now = datetime.now().strftime('%d/%m/%Y %H:%M')
+        lote_vigente = int(carregar_config().get('camisetas_lote_vigente', '1'))
         with get_db() as conn:
             row = conn.execute(
                 'SELECT * FROM camisetas_pedidos WHERE cpf=? AND status_pagamento != ?',
@@ -4135,7 +4136,6 @@ def api_camisetas_salvar():
                 acao_audit = 'CAM_EDICAO_PUBLICA'
             else:
                 num_pedido = _proximo_numero_pedido(conn)
-                lote_vigente = int(carregar_config().get('camisetas_lote_vigente', '1'))
                 cur = conn.execute(
                     'INSERT INTO camisetas_pedidos (cpf,nome,telefone,tamanho,data_nascimento,equipe,obs_cadastro,numero_pedido,status_pagamento,criado_em,atualizado_em,lote) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
                     (cpf, nome, tel, tam, dt_nasc, equipe, obs_cadastro, num_pedido, 'Realizado', now, now, lote_vigente)
