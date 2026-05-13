@@ -153,10 +153,15 @@ bingo-dev-update    # deploy testes
   - Migration: coluna `lote INTEGER DEFAULT 1` em `camisetas_pedidos` (pedidos existentes ficam lote 1)
   - Config: nova chave `camisetas_lote_vigente` (padrão 1) — novos pedidos recebem o lote vigente
   - Config admin: campo "Lote vigente" com destaque visual roxo
-  - Aba Pedidos: filtro por lote (select populado dinamicamente) + coluna Lote na tabela (badge L1, L2...)
-  - Aba Resumo: seletor de lote próprio, filtra totais por tamanho do lote selecionado
-  - Aba Relatório: filtro por lote + coluna Lote nos resultados, preview/PDF e export Excel
-
+  - Aba Pedidos: coluna Lote antes do N° (badge L1, L2...) + filtro por lote
+  - Aba Resumo: seletor de lote, filtra totais por tamanho do lote selecionado
+  - Aba Por Tamanho: filtro por lote + coluna Lote antes do N° (tabela, Excel, PDF)
+  - Aba Relatório: filtro por lote + coluna Lote após N° nos resultados, preview/PDF e export Excel
+  - Modal de editar: exibe N° pedido e lote no título
+  - Modal de info: exibe badge de lote ao lado do N° pedido
+  - Página pública de confirmação: exibe lote na mensagem de pedido realizado
+  - Corrigido script bingo-dev-update no servidor para usar git reset --hard origin/main
+  - Deploy em produção realizado com sucesso (eed3bb8 → 1b40aab)
 ### Sessão 12/05/2026
 - Implementada ordenação por coluna na tabela de camisetas (index.html)
   - Colunas clicáveis: N°, CPF, Nome, Equipe, Tel, Tam, Valor, Pgto
