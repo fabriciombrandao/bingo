@@ -8069,6 +8069,9 @@ function _corNum(n) {
           <select id="cam-filtro-equipe" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
             <option value="">Todas</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option>
           </select>
+          <select id="cam-filtro-lote" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos lotes</option>
+          </select>
           <button onclick="camCarregar()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:7px;cursor:pointer;font-size:0.82rem;">&#128260;</button>
           <span id="cam-totais" style="font-size:0.81rem;color:var(--text3);margin-left:auto;"></span>
         </div>
@@ -8109,6 +8112,10 @@ function _corNum(n) {
               <input type="date" id="rel-cad-de" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
             <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Cadastro At&#233;</label>
               <input type="date" id="rel-cad-ate" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">&#127981; Lote</label>
+              <select id="rel-lote" style="padding:6px 9px;border-radius:6px;border:2px solid #6366f1;background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
+                <option value="">Todos</option>
+              </select></div>
             <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Ordenar por</label>
               <select id="rel-ordem" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
                 <option value="numero_pedido">N&#186; Pedido</option><option value="nome">Nome</option>
@@ -8158,7 +8165,9 @@ function _corNum(n) {
           <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Benefici&#225;rio</label>
           <input type="text" id="cam-cfg-benef" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
           <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Celular para comprovante (WhatsApp)</label>
-          <input type="text" id="cam-cfg-celular" placeholder="63 9 0000-0000" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:16px;">
+          <input type="text" id="cam-cfg-celular" placeholder="63 9 0000-0000" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
+          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">&#127981; Lote vigente <span style="color:#6366f1;font-weight:700;">(novos pedidos serão atribuídos a este lote)</span></label>
+          <input type="number" id="cam-cfg-lote" min="1" step="1" value="1" style="padding:7px 10px;border-radius:6px;border:2px solid #6366f1;background:var(--bg2);color:var(--text);font-size:0.9rem;font-weight:700;width:120px;margin-bottom:16px;">
           <h4 style="font-size:0.83rem;font-weight:700;margin-bottom:10px;color:var(--text);">&#128176; Valor por tamanho (R$)</h4>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;" id="cam-cfg-valores"></div>
           <button onclick="camSalvarConfig()" style="background:#2563eb;border:none;color:#fff;padding:9px 20px;border-radius:7px;cursor:pointer;font-size:0.85rem;font-weight:600;">&#128190; Salvar</button>
@@ -8367,6 +8376,15 @@ function camCarregar() {
     _camDados = results[0].pedidos || [];
     window._camCfgValores = results[1].valores || window._camCfgValores || {};
     _camSelecionados = new Set();
+    // Popular select de lotes
+    var lotes = [...new Set(_camDados.map(function(p){ return p.lote||1; }))].sort(function(a,b){return a-b;});
+    var sel = document.getElementById('cam-filtro-lote');
+    if (sel) {
+      var valAtual = sel.value;
+      sel.innerHTML = '<option value="">Todos lotes</option>';
+      lotes.forEach(function(l){ sel.innerHTML += '<option value="'+l+'">Lote '+l+'</option>'; });
+      if (valAtual) sel.value = valAtual;
+    }
     console.log('[CAM] Dados carregados em', Date.now()-_t0, 'ms | Pedidos:', _camDados.length);
     camFiltrar();
   });
@@ -8376,10 +8394,12 @@ function camFiltrar() {
   var st=document.getElementById('cam-filtro-status').value;
   var tm=document.getElementById('cam-filtro-tam').value;
   var eq=document.getElementById('cam-filtro-equipe').value;
+  var lt=document.getElementById('cam-filtro-lote') ? document.getElementById('cam-filtro-lote').value : '';
   _camFiltrado=_camDados.filter(function(p){
     if(st&&p.status_pagamento!==st) return false;
     if(tm&&p.tamanho!==tm) return false;
     if(eq&&(p.equipe||'')!==eq) return false;
+    if(lt&&String(p.lote||1)!==String(lt)) return false;
     if(busca){var h=[(p.nome||''),(p.cpf||''),(p.numero_pedido||'')].join(' ').toLowerCase(); if(h.indexOf(busca)<0) return false;}
     return true;
   });
@@ -8446,6 +8466,7 @@ function camRenderizar() {
     _thC('Tel','telefone') +
     _thC('Tam','tamanho') +
     _thC('Valor','valor') +
+    _thC('Lote','lote') +
     _thC('Pgto','status_pagamento') +
     _thP('Entrega') +
     _thP('Ações') +
@@ -8503,6 +8524,7 @@ function camRenderizar() {
         }
         return '<td style="padding:6px 8px;">'+html+'</td>';
       }()) +
+      '<td style="padding:6px 8px;text-align:center;"><span style="background:#6366f122;color:#6366f1;padding:2px 8px;border-radius:99px;font-size:0.7rem;font-weight:700;">L'+(p.lote||1)+'</span></td>' +
       '<td style="padding:6px 8px;">'+btnPagar+'</td>' +
       '<td style="padding:6px 8px;">'+entregaBadge+'</td>' +
       '<td style="padding:6px 8px;white-space:nowrap;">' +
@@ -8844,13 +8866,15 @@ function camSalvarEdicao(){
 function camCarregarResumo(){
   var el=document.getElementById('cam-resumo-conteudo');
   el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Carregando...</div>';
-  fetch('/api/camisetas/resumo-tamanhos').then(function(r){return r.json();}).then(function(d){
-    var resumo=d.resumo||{}; var valores=d.valores||{};
+  var loteAtual = (document.getElementById('cam-resumo-lote') ? document.getElementById('cam-resumo-lote').value : '') || (document.getElementById('cam-filtro-lote') ? (document.getElementById('cam-filtro-lote').value||'') : '');
+  var url='/api/camisetas/resumo-tamanhos'+(loteAtual?'?lote='+loteAtual:'');
+  fetch(url).then(function(r){return r.json();}).then(function(d){
+    var resumo=d.resumo||{}; var valores=d.valores||{}; var lotesDisp=d.lotes||[];
     function val(t){return parseFloat((valores[t]||'0').replace(',','.'))||0;}
     function brl(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2});}
     var tG=0,pG=0,peG=0,cG=0,vpG=0,vpeG=0,vtG=0;
     var tAdds=0,pAdds=0,peAdds=0,cAdds=0,vtAdds=0,vpAdds=0,vpeAdds=0;
-    var listaDados=_camDados||[];
+    var listaDados=(_camDados||[]).filter(function(p){ return loteAtual?String(p.lote||1)===String(loteAtual):true; });
     listaDados.forEach(function(p){
       var vt=val(p.tamanho);
       var st=p.status_pagamento;
@@ -8880,6 +8904,14 @@ function camCarregarResumo(){
       '</div>';
     }).join('');
     el.innerHTML=
+      '<div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;">' +
+        '<label style="font-size:0.78rem;color:var(--text3);">&#127981; Filtrar por lote:</label>' +
+        '<select id="cam-resumo-lote" onchange="camCarregarResumo()" style="padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">' +
+          '<option value="">Todos os lotes</option>' +
+          lotesDisp.map(function(l){return '<option value="'+l+'"'+(String(l)===String(loteAtual)?' selected':'')+'>Lote '+l+'</option>';}).join('') +
+        '</select>' +
+        (loteAtual ? '<span style="background:#6366f122;color:#6366f1;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:700;">Lote '+loteAtual+' selecionado</span>' : '') +
+      '</div>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:16px;">' +
         '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;">' +
           '<div style="font-size:0.72rem;color:var(--text3);margin-bottom:4px;">&#128100; Total Principais</div>' +
@@ -8922,6 +8954,15 @@ function _relVal(t){return parseFloat(((window._camCfgValores||{})[t]||'0').repl
 
 function camRelFiltrar(){
   if(!_camDados.length){camCarregar();return;}
+  // Popular select de lotes no relatório
+  var selLote=document.getElementById('rel-lote');
+  if(selLote){
+    var lotesRel=[...new Set(_camDados.map(function(p){return p.lote||1;}))].sort(function(a,b){return a-b;});
+    var valLote=selLote.value;
+    selLote.innerHTML='<option value="">Todos</option>';
+    lotesRel.forEach(function(l){selLote.innerHTML+='<option value="'+l+'">Lote '+l+'</option>';});
+    if(valLote) selLote.value=valLote;
+  }
   var cpf=(document.getElementById('rel-cpf').value||'').replace(/\D/g,'');
   var tel=(document.getElementById('rel-tel').value||'').replace(/\D/g,'');
   var tam=document.getElementById('rel-tam').value;
@@ -8935,6 +8976,7 @@ function camRelFiltrar(){
   var cadAte=document.getElementById('rel-cad-ate').value;
   var ordem=document.getElementById('rel-ordem').value;
   var tipo=document.getElementById('rel-tipo').value;
+  var relLote=selLote?selLote.value:'';
 
   var linhas=[];
   _camDados.forEach(function(p){
@@ -8943,6 +8985,7 @@ function camRelFiltrar(){
     if(status&&p.status_pagamento!==status) return;
     if(forma&&(p.forma_pagamento||'').toLowerCase().indexOf(forma)<0) return;
     if(relEq&&(p.equipe||'')!==relEq) return;
+    if(relLote&&String(p.lote||1)!==String(relLote)) return;
     if(entregue!==''&&String(p.entregue?'1':'0')!==entregue) return;
     if(pgtoDe&&_normData(p.data_pagamento)<pgtoDe) return;
     if(pgtoAte&&_normData(p.data_pagamento)>pgtoAte) return;
@@ -8954,7 +8997,7 @@ function camRelFiltrar(){
     var base={num:p.numero_pedido||'',cpf:cpfFmt,nome:p.nome,equipe:p.equipe||'',telefone:p.telefone,
       tamanho:p.tamanho,status:p.status_pagamento,forma:p.forma_pagamento||'',
       data_pgto:_fmtData(p.data_pagamento),entregue:parseInt(p.entregue||0)===1?'Sim':'Não',
-      data_entrega:_fmtData(p.data_entrega),criado_em:_fmtData(p.criado_em),
+      data_entrega:_fmtData(p.data_entrega),criado_em:_fmtData(p.criado_em),lote:p.lote||1,
       tipo_linha:'Principal',_valor:_relVal(p.tamanho),_valor_total:_totPed,_valor_pago:_pagoPed,_saldo:_totPed-_pagoPed,_ord_num:p.numero_pedido||''};
 
     // Em analítico: verifica adicionais que batem no filtro de tamanho
@@ -9009,8 +9052,8 @@ function camRelFiltrar(){
   if(!tot){document.getElementById('cam-rel-conteudo').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Nenhum registro.</div>';document.getElementById('cam-rel-totais-baixo').innerHTML='';return;}
 
   var cols=tipo==='analitico'
-    ?['N&#186;','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Data Entrega','Cadastro']
-    :['N&#186;','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Cadastro'];
+    ?['N&#186;','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Data Entrega','Lote','Cadastro']
+    :['N&#186;','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Lote','Cadastro'];
 
   // Agrupa adicionais sob seus principais para renderizar em árvore
   var grupos=[];
@@ -9031,7 +9074,7 @@ function camRelFiltrar(){
   }
 
   var colsHeader=tipo==='analitico'
-    ?['N&#186;','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Data Entrega','Cadastro']
+    ?['N&#186;','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Data Entrega','Lote','Cadastro']
     :cols;
 
   var html='<table style="width:100%;border-collapse:collapse;font-size:0.78rem;">' +
@@ -9052,8 +9095,8 @@ function camRelFiltrar(){
     var btnExp=hasAdds?'<button onclick="relToggleAdds(\'' + relAddId + '\')" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--blue);cursor:pointer;font-size:0.72rem;padding:1px 5px;margin-left:4px;">+'+g.adicionais.length+'</button>':'';
     var nomeCell=l.nome+btnExp;
     var cells=tipo==='analitico'
-      ?[l.num,l.cpf,nomeCell,(l.equipe||'&#8212;'),l.telefone,l.tamanho,_relBrl(l._valor_total||l._valor),_relBrl(l._valor_pago||0),_relBrl(l._saldo||0),badge,l.forma,l.data_pgto,enBadge,l.data_entrega,l.criado_em]
-      :[l.num,l.cpf,l.nome,(l.equipe||'&#8212;'),l.telefone,l.tamanho,_relBrl(l._valor_total||l._valor),_relBrl(l._valor_pago||0),_relBrl(l._saldo||0),badge,l.forma,l.data_pgto,enBadge,l.criado_em];
+      ?[l.num,l.cpf,nomeCell,(l.equipe||'&#8212;'),l.telefone,l.tamanho,_relBrl(l._valor_total||l._valor),_relBrl(l._valor_pago||0),_relBrl(l._saldo||0),badge,l.forma,l.data_pgto,enBadge,l.data_entrega,'<span style="background:#6366f122;color:#6366f1;padding:1px 6px;border-radius:99px;font-size:0.7rem;font-weight:700;">L'+(l.lote||1)+'</span>',l.criado_em]
+      :[l.num,l.cpf,l.nome,(l.equipe||'&#8212;'),l.telefone,l.tamanho,_relBrl(l._valor_total||l._valor),_relBrl(l._valor_pago||0),_relBrl(l._saldo||0),badge,l.forma,l.data_pgto,enBadge,'<span style="background:#6366f122;color:#6366f1;padding:1px 6px;border-radius:99px;font-size:0.7rem;font-weight:700;">L'+(l.lote||1)+'</span>',l.criado_em];
     html+='<tr style="border-bottom:1px solid var(--border);background:'+rowBg+';">' +
       cells.map(function(cel){return '<td style="padding:6px 9px;">'+cel+'</td>';}).join('') +
     '</tr>';
@@ -9085,7 +9128,7 @@ function relToggleAdds(id){
 
 function camRelLimpar(){
   ['rel-cpf','rel-tel','rel-forma'].forEach(function(id){document.getElementById(id).value='';});
-  ['rel-tam','rel-status','rel-entregue','rel-ordem','rel-equipe'].forEach(function(id){document.getElementById(id).value=document.getElementById(id).options[0].value;});
+  ['rel-tam','rel-status','rel-entregue','rel-ordem','rel-equipe','rel-lote'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=el.options[0].value;});
   document.getElementById('rel-tipo').value='analitico';
   ['rel-pgto-de','rel-pgto-ate','rel-cad-de','rel-cad-ate'].forEach(function(id){document.getElementById(id).value='';});
   camRelFiltrar();
@@ -9093,7 +9136,7 @@ function camRelLimpar(){
 
 function _camRelDadosParaExport(){
   var linhas=window._camRelLinhas||[]; var cols=window._camRelCols||[];
-  var keys=['num','cpf','nome','telefone','tamanho','_valor','status','forma','data_pgto','entregue','data_entrega','criado_em'];
+  var keys=['num','cpf','nome','telefone','tamanho','_valor','status','forma','data_pgto','entregue','data_entrega','lote','criado_em'];
   if(window._camRelTipo==='analitico') keys.push('tipo_linha');
   var rows=linhas.map(function(l){
     return keys.slice(0,cols.length).map(function(k){
@@ -9457,6 +9500,7 @@ function camCarregarConfig(){
     document.getElementById('cam-cfg-benef').value=d.beneficiario||'';
     document.getElementById('cam-cfg-desc').value=d.descricao||'';
     document.getElementById('cam-cfg-celular').value=d.celular_comprovante||'';
+    document.getElementById('cam-cfg-lote').value=d.lote_vigente||1;
     var html=''; TAMANHOS_CAM.forEach(function(t){
       html+='<div><label style="font-size:0.72rem;color:var(--text3);display:block;">'+t+'</label>' +
         '<input type="number" id="cam-val-'+t+'" value="'+(d.valores[t]||'')+'" min="0" step="0.01" ' +
@@ -9474,7 +9518,8 @@ function camSalvarConfig(){
     camisetas_chave_pix:document.getElementById('cam-cfg-pix').value,
     camisetas_beneficiario:document.getElementById('cam-cfg-benef').value,
     camisetas_descricao:document.getElementById('cam-cfg-desc').value,
-    camisetas_celular_comprovante:document.getElementById('cam-cfg-celular').value};
+    camisetas_celular_comprovante:document.getElementById('cam-cfg-celular').value,
+    camisetas_lote_vigente:document.getElementById('cam-cfg-lote').value};
   TAMANHOS_CAM.forEach(function(t){p['camisetas_valor_'+t]=document.getElementById('cam-val-'+t).value||'0';});
   fetch('/api/camisetas/config-admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)})
     .then(function(r){return r.json();}).then(function(d){
