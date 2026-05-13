@@ -8079,7 +8079,15 @@ function _corNum(n) {
       </div>
 
       <!-- ABA RESUMO -->
-      <div id="cam-aba-resumo" style="display:none;"><div id="cam-resumo-conteudo"></div></div>
+      <div id="cam-aba-resumo" style="display:none;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <label style="font-size:0.78rem;color:var(--text3);">🎪 Filtrar por lote:</label>
+          <select id="cam-resumo-lote" onchange="camCarregarResumo()" style="padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos os lotes</option>
+          </select>
+        </div>
+        <div id="cam-resumo-conteudo"></div>
+      </div>
 
       <!-- ABA RELATORIOS -->
       <div id="cam-aba-relatorio" style="display:none;">
@@ -8870,10 +8878,18 @@ function camSalvarEdicao(){
 function camCarregarResumo(){
   var el=document.getElementById('cam-resumo-conteudo');
   el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Carregando...</div>';
-  var loteAtual = (document.getElementById('cam-resumo-lote') ? document.getElementById('cam-resumo-lote').value : '') || (document.getElementById('cam-filtro-lote') ? (document.getElementById('cam-filtro-lote').value||'') : '');
+  var selLote = document.getElementById('cam-resumo-lote');
+  var loteAtual = selLote ? selLote.value : '';
   var url='/api/camisetas/resumo-tamanhos'+(loteAtual?'?lote='+loteAtual:'');
   fetch(url).then(function(r){return r.json();}).then(function(d){
     var resumo=d.resumo||{}; var valores=d.valores||{}; var lotesDisp=d.lotes||[];
+    // Popular select fixo mantendo valor selecionado
+    if(selLote){
+      var valAtual=selLote.value;
+      selLote.innerHTML='<option value="">Todos os lotes</option>';
+      lotesDisp.forEach(function(l){selLote.innerHTML+='<option value="'+l+'">Lote '+l+'</option>';});
+      selLote.value=valAtual;
+    }
     function val(t){return parseFloat((valores[t]||'0').replace(',','.'))||0;}
     function brl(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2});}
     var tG=0,pG=0,peG=0,cG=0,vpG=0,vpeG=0,vtG=0;
@@ -8908,14 +8924,6 @@ function camCarregarResumo(){
       '</div>';
     }).join('');
     el.innerHTML=
-      '<div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;">' +
-        '<label style="font-size:0.78rem;color:var(--text3);">&#127981; Filtrar por lote:</label>' +
-        '<select id="cam-resumo-lote" onchange="camCarregarResumo()" style="padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">' +
-          '<option value="">Todos os lotes</option>' +
-          lotesDisp.map(function(l){return '<option value="'+l+'"'+(String(l)===String(loteAtual)?' selected':'')+'>Lote '+l+'</option>';}).join('') +
-        '</select>' +
-        (loteAtual ? '<span style="background:#6366f122;color:#6366f1;padding:3px 10px;border-radius:99px;font-size:0.75rem;font-weight:700;">Lote '+loteAtual+' selecionado</span>' : '') +
-      '</div>' +
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:16px;">' +
         '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;">' +
           '<div style="font-size:0.72rem;color:var(--text3);margin-bottom:4px;">&#128100; Total Principais</div>' +
