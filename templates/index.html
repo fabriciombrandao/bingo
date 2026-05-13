@@ -9052,8 +9052,8 @@ function camRelFiltrar(){
   if(!tot){document.getElementById('cam-rel-conteudo').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Nenhum registro.</div>';document.getElementById('cam-rel-totais-baixo').innerHTML='';return;}
 
   var cols=tipo==='analitico'
-    ?['N&#186;','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Data Entrega','Lote','Cadastro']
-    :['N&#186;','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Lote','Cadastro'];
+    ?['N&#186;','Lote','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Data Entrega','Cadastro']
+    :['N&#186;','Lote','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Cadastro'];
 
   // Agrupa adicionais sob seus principais para renderizar em árvore
   var grupos=[];
@@ -9074,7 +9074,7 @@ function camRelFiltrar(){
   }
 
   var colsHeader=tipo==='analitico'
-    ?['N&#186;','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Data Entrega','Lote','Cadastro']
+    ?['N&#186;','Lote','CPF','Nome','Equipe','Tel','Tam','V.Total','V.Pago','Saldo','Status','Forma Pgto','Data Pgto','Entregue','Data Entrega','Cadastro']
     :cols;
 
   var html='<table style="width:100%;border-collapse:collapse;font-size:0.78rem;">' +
@@ -9095,8 +9095,8 @@ function camRelFiltrar(){
     var btnExp=hasAdds?'<button onclick="relToggleAdds(\'' + relAddId + '\')" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--blue);cursor:pointer;font-size:0.72rem;padding:1px 5px;margin-left:4px;">+'+g.adicionais.length+'</button>':'';
     var nomeCell=l.nome+btnExp;
     var cells=tipo==='analitico'
-      ?[l.num,l.cpf,nomeCell,(l.equipe||'&#8212;'),l.telefone,l.tamanho,_relBrl(l._valor_total||l._valor),_relBrl(l._valor_pago||0),_relBrl(l._saldo||0),badge,l.forma,l.data_pgto,enBadge,l.data_entrega,'<span style="background:#6366f122;color:#6366f1;padding:1px 6px;border-radius:99px;font-size:0.7rem;font-weight:700;">L'+(l.lote||1)+'</span>',l.criado_em]
-      :[l.num,l.cpf,l.nome,(l.equipe||'&#8212;'),l.telefone,l.tamanho,_relBrl(l._valor_total||l._valor),_relBrl(l._valor_pago||0),_relBrl(l._saldo||0),badge,l.forma,l.data_pgto,enBadge,'<span style="background:#6366f122;color:#6366f1;padding:1px 6px;border-radius:99px;font-size:0.7rem;font-weight:700;">L'+(l.lote||1)+'</span>',l.criado_em];
+      ?[l.num,'<span style="background:#6366f122;color:#6366f1;padding:1px 6px;border-radius:99px;font-size:0.7rem;font-weight:700;">L'+(l.lote||1)+'</span>',l.cpf,nomeCell,(l.equipe||'&#8212;'),l.telefone,l.tamanho,_relBrl(l._valor_total||l._valor),_relBrl(l._valor_pago||0),_relBrl(l._saldo||0),badge,l.forma,l.data_pgto,enBadge,l.data_entrega,l.criado_em]
+      :[l.num,'<span style="background:#6366f122;color:#6366f1;padding:1px 6px;border-radius:99px;font-size:0.7rem;font-weight:700;">L'+(l.lote||1)+'</span>',l.cpf,l.nome,(l.equipe||'&#8212;'),l.telefone,l.tamanho,_relBrl(l._valor_total||l._valor),_relBrl(l._valor_pago||0),_relBrl(l._saldo||0),badge,l.forma,l.data_pgto,enBadge,l.criado_em];
     html+='<tr style="border-bottom:1px solid var(--border);background:'+rowBg+';">' +
       cells.map(function(cel){return '<td style="padding:6px 9px;">'+cel+'</td>';}).join('') +
     '</tr>';
