@@ -8147,9 +8147,15 @@ function _corNum(n) {
 
       <!-- ABA POR TAMANHO -->
       <div id="cam-aba-tamanho" style="display:none;">
-        <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;">
+        <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
           <select id="cam-tam-lote" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:2px solid #6366f1;background:var(--bg3);color:var(--text);font-size:0.82rem;">
             <option value="">Todos os lotes</option>
+          </select>
+          <select id="cam-tam-status" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos status</option><option value="Pago">✓ Pago</option><option value="Pendente">⏳ Pendente</option><option value="Realizado">Realizado</option>
+          </select>
+          <select id="cam-tam-equipe" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todas equipes</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option>
           </select>
           <button onclick="camTamCarregar()" style="background:#2563eb;border:none;color:#fff;padding:7px 16px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128260; Atualizar</button>
           <button onclick="camTamExportarExcel()" style="background:#16a34a;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128229; Excel</button>
@@ -9299,9 +9305,15 @@ function camTamCarregar() {
       selLote.value = valAtual;
     }
     var loteAtual = selLote ? selLote.value : '';
+    var statusAtual = document.getElementById('cam-tam-status') ? document.getElementById('cam-tam-status').value : '';
+    var equipeAtual = document.getElementById('cam-tam-equipe') ? document.getElementById('cam-tam-equipe').value : '';
 
     // Filtra por lote se selecionado
     if (loteAtual) pedidos = pedidos.filter(function(p){ return String(p.lote||1) === String(loteAtual); });
+    // Filtra por status
+    if (statusAtual) pedidos = pedidos.filter(function(p){ return p.status_pagamento === statusAtual; });
+    // Filtra por equipe
+    if (equipeAtual) pedidos = pedidos.filter(function(p){ return (p.equipe||'') === equipeAtual; });
 
     function val(t){ return parseFloat((valores[t]||'0').replace(',','.'))||0; }
     function brl(v){ return 'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
