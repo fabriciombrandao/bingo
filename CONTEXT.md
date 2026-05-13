@@ -162,6 +162,13 @@ bingo-dev-update    # deploy testes
   - Página pública de confirmação: exibe lote na mensagem de pedido realizado
   - Corrigido script bingo-dev-update no servidor para usar git reset --hard origin/main
   - Deploy em produção realizado com sucesso (eed3bb8 → 1b40aab)
+  - Fix: select de lote do resumo movido para HTML fixo (não perde seleção ao filtrar)
+  - Fix: select de lote recolocado na aba Por Tamanho após revert
+  - Fix: opções de lote populadas corretamente na aba Por Tamanho
+  - Feat: filtros de status e equipe adicionados na aba Por Tamanho
+  - Feat: checkbox "Sem valores" na aba Por Tamanho — Excel e PDF sem valores financeiros (para fabricante)
+  - Fix: bingo-dev-update corrigido permanentemente no servidor (git reset --hard origin/main)
+  - Todos os deploys realizados direto em produção via bingo-update
 ### Sessão 12/05/2026
 - Implementada ordenação por coluna na tabela de camisetas (index.html)
   - Colunas clicáveis: N°, CPF, Nome, Equipe, Tel, Tam, Valor, Pgto
