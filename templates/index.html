@@ -7683,6 +7683,9 @@ document.getElementById('modal-vincular-lote').addEventListener('click', functio
 });
 
 // ── SORTEIO ──────────────────────────────────────────────
+function escH(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 var _sorteioAtual = null;   // dia ativo no sortear
 var _eventoAtual  = null;   // evento selecionado
 var _sjPremioAtual = null;
