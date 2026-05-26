@@ -5047,15 +5047,6 @@ function salvarNovoContato() {
     .catch(function(err){ console.error('Erro ao salvar:', err); alert('Erro de conexão ao salvar. Verifique e tente novamente.'); })
     .finally(function(){ btn.disabled=false; btn.innerHTML='💾 Salvar'; });
 }
-// Fechar modal ao clicar fora
-document.getElementById('modal-novo-contato').addEventListener('click', function(e) {
-  if (e.target === this) fecharModalNovoContato();
-});
-// Enter no último campo salva
-document.getElementById('nc-valor').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') salvarNovoContato();
-});
-
 </script>
 
 <!-- MODAL NOVO CONTATO -->
@@ -5136,6 +5127,16 @@ document.getElementById('nc-valor').addEventListener('keydown', function(e) {
 <style>
 @keyframes ncIn { from { opacity:0; transform:scale(0.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
 </style>
+<script>
+// Fechar modal ao clicar fora
+document.getElementById('modal-novo-contato').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalNovoContato();
+});
+// Enter no último campo salva
+document.getElementById('nc-valor').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') salvarNovoContato();
+});
+</script>
 
 <!-- MODAL IMPORTAR CONTATOS -->
 <div id="modal-importar" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;">
@@ -6573,6 +6574,316 @@ function carregarAuditoria(page) {
     </div>
   </div>
 </div>
+
+<div id="modal-camisetas" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:1500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:95%;max-width:1600px;min-height:90vh;margin:auto;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-weight:700;font-size:1rem;">&#128085; Camisetas</span>
+      <button onclick="fecharCamisetas()" style="background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;">&#10005;</button>
+    </div>
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);padding:0 16px;">
+      <button id="cam-tab-pedidos"   onclick="camAba('pedidos')"   style="padding:10px 18px;border:none;border-bottom:3px solid var(--blue);background:transparent;color:var(--blue);font-weight:700;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#128203; Pedidos</button>
+      <button id="cam-tab-resumo"    onclick="camAba('resumo')"    style="padding:10px 18px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#128202; Resumo</button>
+      <button id="cam-tab-relatorio" onclick="camAba('relatorio')" style="padding:10px 18px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#128196; Relat&#243;rios</button>
+      <button id="cam-tab-tamanho"   onclick="camAba('tamanho')"   style="padding:10px 18px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#128085; Por Tamanho</button>
+      <button id="cam-tab-config"    onclick="camAba('config')"    style="padding:10px 18px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#9881; Config</button>
+    </div>
+    <div style="overflow-y:auto;max-height:76vh;padding:18px 20px;">
+
+      <!-- ABA PEDIDOS -->
+      <div id="cam-aba-pedidos">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+          <input type="text" id="cam-busca" placeholder="Nome ou CPF..." oninput="camFiltrar()" style="padding:7px 11px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;width:180px;">
+          <select id="cam-filtro-status" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos status</option><option value="Pendente">&#9203; Pendente</option><option value="Pago">&#10003; Pago</option><option value="Cancelado">&#10005; Cancelado</option>
+          </select>
+          <select id="cam-filtro-tam" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos tam.</option><option value="N0">Nº 0</option><option value="N2">Nº 2</option><option value="N4">Nº 4</option><option value="N6">Nº 6</option><option value="N8">Nº 8</option><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>EXG</option><option>EXGG</option>
+          </select>
+          <select id="cam-filtro-equipe" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todas</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option>
+          </select>
+          <select id="cam-filtro-lote" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos lotes</option>
+          </select>
+          <button onclick="camCarregar()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:7px;cursor:pointer;font-size:0.82rem;">&#128260;</button>
+          <span id="cam-totais" style="font-size:0.81rem;color:var(--text3);margin-left:auto;"></span>
+        </div>
+        <div id="cam-tabela" style="overflow-x:auto;"></div>
+      </div>
+
+      <!-- ABA RESUMO -->
+      <div id="cam-aba-resumo" style="display:none;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <label style="font-size:0.78rem;color:var(--text3);">🎪 Filtrar por lote:</label>
+          <select id="cam-resumo-lote" onchange="camCarregarResumo()" style="padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos os lotes</option>
+          </select>
+        </div>
+        <div id="cam-resumo-conteudo"></div>
+      </div>
+
+      <!-- ABA RELATORIOS -->
+      <div id="cam-aba-relatorio" style="display:none;">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:12px;">
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">CPF</label>
+              <input type="text" id="rel-cpf" placeholder="000.000.000-00" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Telefone</label>
+              <input type="text" id="rel-tel" placeholder="..." style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Tamanho</label>
+              <select id="rel-tam" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
+                <option value="">Todos</option><option value="N0">Nº 0</option><option value="N2">Nº 2</option><option value="N4">Nº 4</option><option value="N6">Nº 6</option><option value="N8">Nº 8</option><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>EXG</option><option>EXGG</option></select></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Status pgto</label>
+              <select id="rel-status" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
+                <option value="">Todos</option><option value="Realizado">Realizado</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option><option value="Cancelado">Cancelado</option></select></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Forma pgto</label>
+              <input type="text" id="rel-forma" placeholder="PIX..." style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Equipe</label>
+              <select id="rel-equipe" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
+                <option value="">Todas</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option>
+              </select></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Data pgto De</label>
+              <input type="date" id="rel-pgto-de" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Data pgto At&#233;</label>
+              <input type="date" id="rel-pgto-ate" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Entregue</label>
+              <select id="rel-entregue" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
+                <option value="">Todos</option><option value="1">Sim</option><option value="0">N&#227;o</option></select></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Cadastro De</label>
+              <input type="date" id="rel-cad-de" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Cadastro At&#233;</label>
+              <input type="date" id="rel-cad-ate" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">&#127981; Lote</label>
+              <select id="rel-lote" style="padding:6px 9px;border-radius:6px;border:2px solid #6366f1;background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
+                <option value="">Todos</option>
+              </select></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Ordenar por</label>
+              <select id="rel-ordem" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
+                <option value="numero_pedido">N&#186; Pedido</option><option value="nome">Nome</option>
+                <option value="tamanho">Tamanho</option><option value="status">Status</option><option value="data_pgto">Data Pgto</option></select></div>
+            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Tipo</label>
+              <select id="rel-tipo" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
+                <option value="analitico">Anal&#237;tico</option><option value="sintetico">Sint&#233;tico</option></select></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="camRelFiltrar()" style="background:#2563eb;border:none;color:#fff;padding:7px 16px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128269; Filtrar</button>
+            <button onclick="camRelLimpar()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;">Limpar</button>
+            <button onclick="camRelExportarExcel()" style="background:#16a34a;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128229; Excel</button>
+            <button onclick="camRelPreview()" style="background:#7c3aed;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128065; Preview</button>
+            <button onclick="camRelExportarPDF()" style="background:#ef4444;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128196; PDF/Imprimir</button>
+          </div>
+        </div>
+        <div id="cam-rel-totais-topo" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:0.82rem;margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap;"></div>
+        <div id="cam-rel-conteudo" style="overflow-x:auto;"></div>
+        <div id="cam-rel-totais-baixo" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:0.82rem;margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;"></div>
+      </div>
+
+      <!-- ABA POR TAMANHO -->
+      <div id="cam-aba-tamanho" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
+          <select id="cam-tam-lote" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:2px solid #6366f1;background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos os lotes</option>
+          </select>
+          <select id="cam-tam-status" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todos status</option><option value="Pago">✓ Pago</option><option value="Pendente">⏳ Pendente</option><option value="Realizado">Realizado</option>
+          </select>
+          <select id="cam-tam-equipe" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
+            <option value="">Todas equipes</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option>
+          </select>
+          <button onclick="camTamCarregar()" style="background:#2563eb;border:none;color:#fff;padding:7px 16px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128260; Atualizar</button>
+          <button onclick="camTamExportarExcel()" style="background:#16a34a;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128229; Excel</button>
+          <button onclick="camTamPreview()" style="background:#7c3aed;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128065; Preview/PDF</button>
+          <label style="font-size:0.8rem;color:var(--text3);display:flex;align-items:center;gap:5px;cursor:pointer;margin-left:4px;">
+            <input type="checkbox" id="cam-tam-sem-valores" style="width:auto;"> Sem valores
+          </label>
+        </div>
+        <div id="cam-tam-conteudo"><div style="text-align:center;padding:40px;color:var(--text3);">Clique em Atualizar para carregar.</div></div>
+      </div>
+
+      <!-- ABA CONFIG -->
+      <div id="cam-aba-config" style="display:none;max-width:560px;">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+          <h3 style="font-size:0.92rem;font-weight:700;margin-bottom:14px;color:var(--text);">&#9881; Configura&#231;&#245;es gerais</h3>
+          <label style="font-size:0.78rem;color:var(--text3);display:flex;align-items:center;gap:8px;margin-bottom:12px;"><input type="checkbox" id="cam-cfg-ativo" style="width:auto;"> Pedidos habilitados</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data in&#237;cio</label>
+              <input type="date" id="cam-cfg-inicio" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;"></div>
+            <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data fim</label>
+              <input type="date" id="cam-cfg-fim" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;"></div>
+          </div>
+          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Descri&#231;&#227;o (p&#225;gina p&#250;blica)</label>
+          <input type="text" id="cam-cfg-desc" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
+          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Chave PIX</label>
+          <input type="text" id="cam-cfg-pix" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
+          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Benefici&#225;rio</label>
+          <input type="text" id="cam-cfg-benef" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
+          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Celular para comprovante (WhatsApp)</label>
+          <input type="text" id="cam-cfg-celular" placeholder="63 9 0000-0000" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
+          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">&#127981; Lote vigente <span style="color:#6366f1;font-weight:700;">(novos pedidos serão atribuídos a este lote)</span></label>
+          <input type="number" id="cam-cfg-lote" min="1" step="1" value="1" style="padding:7px 10px;border-radius:6px;border:2px solid #6366f1;background:var(--bg2);color:var(--text);font-size:0.9rem;font-weight:700;width:120px;margin-bottom:16px;">
+          <h4 style="font-size:0.83rem;font-weight:700;margin-bottom:10px;color:var(--text);">&#128176; Valor por tamanho (R$)</h4>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;" id="cam-cfg-valores"></div>
+          <button onclick="camSalvarConfig()" style="background:#2563eb;border:none;color:#fff;padding:9px 20px;border-radius:7px;cursor:pointer;font-size:0.85rem;font-weight:600;">&#128190; Salvar</button>
+          <span id="cam-cfg-msg" style="font-size:0.82rem;margin-left:12px;"></span>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;">
+          <h3 style="font-size:0.92rem;font-weight:700;margin-bottom:14px;color:var(--text);">&#128247; Fotos da camiseta</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:6px;">Frente</label>
+              <input type="file" id="cam-foto-frente" accept="image/*" style="font-size:0.78rem;width:100%;">
+              <button onclick="camUploadFoto('frente')" style="margin-top:8px;background:#0891b2;border:none;color:#fff;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600;width:100%;">&#11014; Enviar frente</button>
+              <div id="cam-foto-frente-status" style="font-size:0.75rem;margin-top:4px;color:var(--text3);"></div></div>
+            <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:6px;">Verso</label>
+              <input type="file" id="cam-foto-verso" accept="image/*" style="font-size:0.78rem;width:100%;">
+              <button onclick="camUploadFoto('verso')" style="margin-top:8px;background:#0891b2;border:none;color:#fff;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600;width:100%;">&#11014; Enviar verso</button>
+              <div id="cam-foto-verso-status" style="font-size:0.75rem;margin-top:4px;color:var(--text3);"></div></div>
+          </div>
+          <div style="margin-top:14px;font-size:0.78rem;color:var(--text3);">&#128279; Link p&#250;blico: <a href="/camisetas" target="_blank" style="color:var(--blue);">/camisetas</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Pagar -->
+<div id="cam-modal-pagar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:380px;max-width:95vw;">
+    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;">&#10003; Confirmar Pagamento</h3>
+    <input type="hidden" id="cam-pagar-id">
+    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Data de pagamento</label>
+    <input type="date" id="cam-pagar-data" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:10px;">
+    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Forma de pagamento</label>
+    <select id="cam-pagar-forma" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:10px;">
+      <option value="PIX">PIX</option><option value="Dinheiro">Dinheiro</option><option value="Cart&#227;o D&#233;bito">Cart&#227;o D&#233;bito</option><option value="Cart&#227;o Cr&#233;dito">Cart&#227;o Cr&#233;dito</option>
+    </select>
+    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Valor pago (deixe em branco para quitar total)</label>
+    <div style="position:relative;margin-bottom:10px;">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:0.85rem;color:var(--text3);">R$</span>
+      <input type="number" id="cam-pagar-valor" step="0.01" min="0" placeholder="0,00" style="padding:8px 10px 8px 32px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;">
+    </div>
+    <div id="cam-pagar-saldo" style="font-size:0.78rem;color:var(--text3);margin-bottom:10px;min-height:16px;"></div>
+    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Observa&#231;&#227;o</label>
+    <input type="text" id="cam-pagar-obs" placeholder="Opcional..." style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:20px;">
+    <div style="display:flex;gap:10px;">
+      <button id="cam-btn-confirmar-pagar" onclick="camConfirmarPagamento()" style="flex:1;background:#16a34a;border:none;color:#fff;padding:10px;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:700;">Confirmar</button>
+      <button onclick="document.getElementById('cam-modal-pagar').style.display='none'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:7px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Entregar -->
+<div id="cam-modal-entregar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:380px;max-width:95vw;">
+    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;">&#128230; Confirmar Entrega</h3>
+    <input type="hidden" id="cam-entregar-id">
+    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Data de entrega</label>
+    <input type="date" id="cam-entregar-data" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:10px;">
+    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Observa&#231;&#227;o</label>
+    <input type="text" id="cam-entregar-obs" placeholder="Opcional..." style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:20px;">
+    <div style="display:flex;gap:10px;">
+      <button onclick="camConfirmarEntrega()" style="flex:1;background:#0891b2;border:none;color:#fff;padding:10px;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:700;">Confirmar</button>
+      <button onclick="document.getElementById('cam-modal-entregar').style.display='none'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:7px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar -->
+<div id="cam-modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:460px;max-width:95vw;margin:auto;">
+    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;">&#9998; Editar Pedido — <span id="cam-ed-titulo"></span></h3>
+    <input type="hidden" id="cam-ed-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Nome completo *</label>
+        <input type="text" id="cam-ed-nome" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
+      <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Telefone</label>
+        <input type="text" id="cam-ed-tel" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
+      <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Tamanho *</label>
+        <select id="cam-ed-tam" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;">
+          <option value="N0">Nº 0 — Infantil</option><option value="N2">Nº 2 — Infantil</option><option value="N4">Nº 4 — Infantil</option><option value="N6">Nº 6 — Infantil</option><option value="N8">Nº 8 — Infantil</option><option value="PP">PP — Adulto</option><option value="P">P — Adulto</option><option value="M">M — Adulto</option><option value="G">G — Adulto</option><option value="GG">GG — Adulto</option><option value="EXG">EXG — Adulto</option><option value="EXGG">EXGG — Adulto</option></select></div>
+      <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data Nascimento</label>
+        <input type="date" id="cam-ed-nasc" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
+    </div>
+    <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Equipe</label>
+    <select id="cam-ed-equipe" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;margin-bottom:10px;"><option value="">— selecione —</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option></select>
+    <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Obs. cadastro</label>
+    <input type="text" id="cam-ed-obs-cad" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;margin-bottom:10px;">
+    <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Status pagamento</label>
+    <select id="cam-ed-status" onchange="camEdStatusChange()" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;margin-bottom:10px;">
+      <option value="Realizado">Realizado</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option>
+    </select>
+    <div id="cam-ed-pgto-campos">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Forma pgto</label>
+          <select id="cam-ed-forma" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;">
+            <option value="">&#8212;</option><option value="PIX">PIX</option><option value="Dinheiro">Dinheiro</option><option value="Cart&#227;o D&#233;bito">Cart&#227;o D&#233;bito</option><option value="Cart&#227;o Cr&#233;dito">Cart&#227;o Cr&#233;dito</option></select></div>
+        <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data pgto</label>
+          <input type="date" id="cam-ed-data-pgto" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
+      </div>
+      <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Obs. pagamento</label>
+      <input type="text" id="cam-ed-obs-pgto" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;margin-bottom:10px;">
+    </div>
+    <div id="cam-ed-entrega-campos" style="display:none;">
+      <label style="font-size:0.75rem;color:var(--text3);display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <input type="checkbox" id="cam-ed-entregue" style="width:auto;" onchange="camEdEntregueChange()"> Camiseta entregue</label>
+      <div id="cam-ed-data-entrega-wrap" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data entrega</label>
+            <input type="date" id="cam-ed-data-entrega" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
+          <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Obs. entrega</label>
+            <input type="text" id="cam-ed-obs-entrega" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
+        </div>
+      </div>
+    </div>
+    <div id="cam-ed-msg" style="font-size:0.8rem;min-height:18px;color:#ef4444;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="camSalvarEdicao()" style="flex:1;background:#2563eb;border:none;color:#fff;padding:10px;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:700;">Salvar</button>
+      <button onclick="document.getElementById('cam-modal-editar').style.display='none'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:7px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Info Pedido -->
+<div id="cam-modal-info" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:480px;max-width:95vw;margin:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="font-size:0.95rem;font-weight:700;">&#8505; Informações do Pedido</h3>
+      <div style="display:flex;gap:8px;">
+        <button onclick="camImprimirInfo()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:0.82rem;">🖨️ Imprimir</button>
+        <button onclick="document.getElementById('cam-modal-info').style.display='none'" style="background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;">&#10005;</button>
+      </div>
+    </div>
+    <div id="cam-info-conteudo"></div>
+  </div>
+</div>
+
+<!-- Modal Estorno -->
+<div id="cam-modal-estorno" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3000;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:380px;max-width:95vw;">
+    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;color:#b91c1c;">↩ Estornar Pagamento</h3>
+    <input type="hidden" id="cam-estorno-pgid">
+    <input type="hidden" id="cam-estorno-pedid">
+    <div id="cam-estorno-info" style="background:var(--bg3);border-radius:8px;padding:10px 14px;font-size:0.83rem;margin-bottom:14px;"></div>
+    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Motivo do estorno *</label>
+    <input type="text" id="cam-estorno-motivo" placeholder="Informe o motivo..." style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:20px;">
+    <div style="display:flex;gap:10px;">
+      <button onclick="camConfirmarEstorno()" style="flex:1;background:#b91c1c;border:none;color:#fff;padding:10px;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:700;">Confirmar Estorno</button>
+      <button onclick="document.getElementById('cam-modal-estorno').style.display='none'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:7px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Comprovante -->
+<div id="cam-modal-comprovante" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:560px;max-width:95vw;margin:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="font-size:0.95rem;font-weight:700;">&#128206; Comprovante de Pagamento</h3>
+      <button onclick="document.getElementById('cam-modal-comprovante').style.display='none'" style="background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;">&#10005;</button>
+    </div>
+    <div id="cam-comprovante-conteudo" style="text-align:center;"></div>
+  </div>
+</div>
+
 
 <script>
 // ============================================================
