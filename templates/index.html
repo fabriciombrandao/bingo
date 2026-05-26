@@ -6232,16 +6232,16 @@ function carregarAuditoria(page) {
 </div>
 
 <!-- MODAL SORTEIO -->
-<div id="modal-sorteio" style="display:none;position:fixed;inset:0;background:rgba(13,27,42,0.85);z-index:2000;align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:960px;margin:auto;min-height:calc(100vh - 24px);display:flex;flex-direction:column;">
+<div id="modal-sorteio" style="display:none;position:fixed;inset:0;background:rgba(13,27,42,0.88);z-index:2000;align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:1100px;margin:auto;min-height:calc(100vh - 24px);display:flex;flex-direction:column;">
 
     <!-- Header -->
     <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#0d1b2a,#1d3557);border-radius:16px 16px 0 0;">
       <div style="display:flex;align-items:center;gap:12px;">
         <span style="font-size:1.8rem;">🎱</span>
         <div>
-          <div style="font-weight:700;font-size:1.1rem;color:#FFD700;">Sorteio do Bingo</div>
-          <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);">Gerencie prêmios, sorteios e operação</div>
+          <div style="font-weight:700;font-size:1.1rem;color:#FFD700;" id="sorteio-header-titulo">Sorteio do Bingo</div>
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.5);" id="sorteio-header-sub">Gerencie eventos, prêmios e operação</div>
         </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
@@ -6252,100 +6252,170 @@ function carregarAuditoria(page) {
 
     <!-- Abas -->
     <div style="display:flex;border-bottom:2px solid var(--border);background:var(--bg3);">
-      <button id="stab-sorteios" onclick="sorteioAba('sorteios')" style="padding:12px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.85rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;display:flex;align-items:center;gap:6px;">📋 Sorteios</button>
-      <button id="stab-sortear"  onclick="sorteioAba('sortear')"  style="padding:12px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.85rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;display:flex;align-items:center;gap:6px;">🎯 Sortear</button>
+      <button id="stab-premios"   onclick="sorteioAba('premios')"  style="padding:12px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.85rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">🏆 Prêmios</button>
+      <button id="stab-eventos"   onclick="sorteioAba('eventos')"  style="padding:12px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.85rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">📅 Eventos</button>
+      <button id="stab-sortear"   onclick="sorteioAba('sortear')"  style="padding:12px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.85rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">🎯 Sortear</button>
+      <button id="stab-auditoria" onclick="sorteioAba('auditoria')" style="padding:12px 22px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.85rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">🔎 Auditoria</button>
     </div>
 
     <!-- Conteúdo das abas -->
-    <div style="flex:1;padding:20px;">
+    <div style="flex:1;padding:20px;overflow-y:auto;">
 
-      <!-- ABA PRÊMIOS -->
-      <!-- ABA SORTEIOS -->
-      <div id="sorteio-aba-sorteios" style="display:none;">
-        <div style="display:grid;grid-template-columns:440px 1fr;gap:20px;">
+      <!-- ═══ ABA PRÊMIOS (catálogo reutilizável) ═══ -->
+      <div id="sorteio-aba-premios" style="display:none;">
+        <div style="display:grid;grid-template-columns:380px 1fr;gap:20px;">
 
-          <!-- Form novo sorteio + prêmios embutidos -->
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;overflow-y:auto;max-height:600px;">
-            <div style="font-weight:700;font-size:0.88rem;margin-bottom:14px;color:var(--text2);">➕ Novo Sorteio</div>
-            <div style="display:flex;flex-direction:column;gap:12px;">
-
+          <!-- Form -->
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;">
+            <div style="font-weight:700;font-size:0.88rem;margin-bottom:14px;color:var(--text2);" id="pm-form-titulo">➕ Novo Prêmio</div>
+            <input type="hidden" id="pm-id">
+            <div style="display:flex;flex-direction:column;gap:10px;">
               <div>
-                <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Nome do Evento *</label>
-                <input type="text" id="ns-nome" placeholder="Ex: Bingo Coração de Maria 2026"
+                <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;">Nome do Prêmio *</label>
+                <input type="text" id="pm-nome" placeholder="Ex: TV 50 polegadas"
                   style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:0.85rem;margin-top:4px;font-family:inherit;">
               </div>
-
               <div>
-                <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Data</label>
-                <input type="date" id="ns-data"
-                  style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:0.85rem;margin-top:4px;font-family:inherit;">
+                <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;">Tipo de Batida</label>
+                <select id="pm-tipo" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:0.85rem;margin-top:4px;font-family:inherit;">
+                  <option value="cartela_cheia">Cartela Cheia</option>
+                  <option value="linha">Linha</option>
+                  <option value="quadra">Quadra</option>
+                  <option value="diagonal">Diagonal</option>
+                  <option value="livre">Livre</option>
+                </select>
               </div>
-
-              <!-- Logo -->
               <div>
-                <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Logo / Arte do Evento</label>
-                <div id="ns-logo-preview" style="display:none;margin-top:6px;margin-bottom:4px;">
-                  <img id="ns-logo-img" src="" style="width:100%;max-height:70px;object-fit:contain;border-radius:6px;border:1px solid var(--border);">
-                  <button onclick="nsRemoverLogo()" style="margin-top:3px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;font-family:inherit;">✕ Remover</button>
-                </div>
-                <div id="ns-logo-upload" style="margin-top:6px;border:2px dashed var(--border);border-radius:8px;padding:8px;text-align:center;cursor:pointer;"
-                  onclick="document.getElementById('ns-logo-input').click()"
-                  ondragover="event.preventDefault()" ondrop="nsDropLogo(event)">
-                  <div style="font-size:0.75rem;color:var(--text3);">📷 Logo/arte do evento</div>
-                </div>
-                <input type="file" id="ns-logo-input" accept="image/*" style="display:none;" onchange="nsSelecionarLogo(this)">
-                <input type="hidden" id="ns-logo-base64">
+                <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;">Descrição</label>
+                <textarea id="pm-descricao" rows="2" placeholder="Detalhes do prêmio..."
+                  style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:0.85rem;margin-top:4px;font-family:inherit;resize:vertical;"></textarea>
               </div>
-
-              <!-- Prêmios embutidos -->
+              <!-- Foto -->
               <div>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                  <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Prêmios</label>
-                  <button onclick="nsAdicionarPremio()" style="padding:3px 10px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);font-size:0.75rem;cursor:pointer;font-family:inherit;">+ Adicionar</button>
+                <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;">Foto do Prêmio</label>
+                <div id="pm-foto-preview" style="display:none;margin-top:6px;margin-bottom:4px;text-align:center;">
+                  <img id="pm-foto-img" src="" style="max-width:100%;max-height:120px;object-fit:contain;border-radius:8px;border:1px solid var(--border);">
+                  <button onclick="pmRemoverFoto()" style="display:block;margin:4px auto 0;padding:2px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;font-family:inherit;">✕ Remover foto</button>
                 </div>
-                <div id="ns-premios-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+                <div id="pm-foto-upload" style="margin-top:6px;border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;"
+                  onclick="document.getElementById('pm-foto-input').click()"
+                  ondragover="event.preventDefault()" ondrop="pmDropFoto(event)">
+                  <div style="font-size:0.75rem;color:var(--text3);">📷 Clique ou arraste a imagem</div>
+                </div>
+                <input type="file" id="pm-foto-input" accept="image/*" style="display:none;" onchange="pmSelecionarFoto(this)">
+                <input type="hidden" id="pm-foto-base64">
               </div>
-
-              <div id="ns-msg" style="font-size:0.78rem;min-height:16px;"></div>
-              <button onclick="nsCriarSorteio()" style="padding:9px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:0.88rem;cursor:pointer;font-family:inherit;font-weight:600;">🎱 Criar Sorteio</button>
+              <div id="pm-msg" style="font-size:0.78rem;min-height:16px;"></div>
+              <div style="display:flex;gap:8px;">
+                <button onclick="pmSalvar()" style="flex:1;padding:9px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:0.88rem;cursor:pointer;font-family:inherit;font-weight:600;">💾 Salvar</button>
+                <button onclick="pmNovo()" style="padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:0.82rem;cursor:pointer;font-family:inherit;">Limpar</button>
+              </div>
             </div>
           </div>
 
-          <!-- Lista de sorteios -->
+          <!-- Lista de prêmios -->
           <div>
-            <div style="font-weight:700;font-size:0.88rem;margin-bottom:12px;color:var(--text2);">📋 Sorteios Cadastrados</div>
-            <div id="sorteio-lista" style="display:flex;flex-direction:column;gap:10px;max-height:560px;overflow-y:auto;">
+            <div style="font-weight:700;font-size:0.88rem;margin-bottom:12px;color:var(--text2);">📋 Catálogo de Prêmios</div>
+            <div id="pm-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;max-height:560px;overflow-y:auto;">
+              <div style="color:var(--text3);font-size:0.82rem;padding:20px;text-align:center;">Carregando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ABA EVENTOS ═══ -->
+      <div id="sorteio-aba-eventos" style="display:none;">
+        <div style="display:grid;grid-template-columns:400px 1fr;gap:20px;">
+
+          <!-- Form evento / form dia -->
+          <div>
+            <!-- Form novo evento -->
+            <div id="ev-form-evento" style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;">
+              <div style="font-weight:700;font-size:0.88rem;margin-bottom:12px;color:var(--text2);">🎪 Novo Evento</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div>
+                  <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;">Nome do Evento *</label>
+                  <input type="text" id="ev-nome" placeholder="Ex: Bingo Coração de Maria 2026"
+                    style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:0.85rem;margin-top:4px;font-family:inherit;">
+                </div>
+                <div>
+                  <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;">Descrição</label>
+                  <input type="text" id="ev-descricao" placeholder="Descrição opcional"
+                    style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:0.85rem;margin-top:4px;font-family:inherit;">
+                </div>
+                <div id="ev-msg" style="font-size:0.78rem;min-height:14px;"></div>
+                <button onclick="evCriarEvento()" style="padding:9px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:0.88rem;cursor:pointer;font-family:inherit;font-weight:600;">🎪 Criar Evento</button>
+              </div>
+            </div>
+
+            <!-- Form novo dia (aparece ao selecionar evento) -->
+            <div id="ev-form-dia" style="display:none;background:var(--bg3);border:1px solid rgba(255,215,0,0.3);border-radius:12px;padding:16px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div style="font-weight:700;font-size:0.88rem;color:#FFD700;">➕ Adicionar Dia</div>
+                <div style="font-size:0.72rem;color:rgba(255,215,0,0.7);" id="ev-dia-evento-nome">—</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <div>
+                    <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;">Nome do Dia *</label>
+                    <input type="text" id="ev-dia-nome" placeholder="Ex: Dia 1"
+                      style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:0.85rem;margin-top:4px;font-family:inherit;">
+                  </div>
+                  <div>
+                    <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;">Data</label>
+                    <input type="date" id="ev-dia-data"
+                      style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text);font-size:0.85rem;margin-top:4px;font-family:inherit;">
+                  </div>
+                </div>
+                <!-- Prêmios do dia -->
+                <div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <label style="font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;">Prêmios do Dia</label>
+                    <button onclick="evAdicionarPremio()" style="padding:3px 10px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);font-size:0.75rem;cursor:pointer;font-family:inherit;">+ Adicionar</button>
+                  </div>
+                  <div id="ev-premios-lista" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;"></div>
+                </div>
+                <div id="ev-dia-msg" style="font-size:0.78rem;min-height:14px;"></div>
+                <button onclick="evCriarDia()" style="padding:9px;border-radius:8px;border:none;background:#FFD700;color:#0d1b2a;font-size:0.88rem;cursor:pointer;font-family:inherit;font-weight:700;">📅 Adicionar Dia ao Evento</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista de eventos -->
+          <div>
+            <div style="font-weight:700;font-size:0.88rem;margin-bottom:12px;color:var(--text2);">📋 Eventos Cadastrados</div>
+            <div id="ev-lista" style="display:flex;flex-direction:column;gap:12px;max-height:600px;overflow-y:auto;">
               <div style="text-align:center;color:var(--text3);padding:30px;font-size:0.82rem;">Carregando...</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ABA SORTEAR -->
+      <!-- ═══ ABA SORTEAR ═══ -->
       <div id="sorteio-aba-sortear" style="display:none;">
         <div id="sorteio-jogar-sem" style="text-align:center;color:var(--text3);padding:60px;">
           <div style="font-size:3rem;margin-bottom:12px;">🎱</div>
-          <div style="font-size:0.95rem;margin-bottom:16px;">Selecione um sorteio na aba <b>Sorteios</b> para começar</div>
-          <button onclick="sorteioAba('sorteios')" style="padding:8px 20px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:0.85rem;cursor:pointer;font-family:inherit;">Ir para Sorteios →</button>
+          <div style="font-size:0.95rem;margin-bottom:16px;">Selecione um dia de sorteio na aba <b>Eventos</b> para começar</div>
+          <button onclick="sorteioAba('eventos')" style="padding:8px 20px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:0.85rem;cursor:pointer;font-family:inherit;">Ir para Eventos →</button>
         </div>
 
         <div id="sorteio-jogar-wrap" style="display:none;">
 
-          <!-- Cabeçalho sorteio ativo -->
+          <!-- Cabeçalho do dia ativo -->
           <div style="background:linear-gradient(135deg,#0d1b2a,#1d3557);border:1px solid rgba(255,215,0,0.25);border-radius:12px;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
             <div>
               <div style="font-size:0.6rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,215,0,0.7);">Sorteio Ativo</div>
               <div style="font-size:1.1rem;font-weight:700;color:#FFD700;" id="sj-sorteio-nome">—</div>
+              <div style="font-size:0.72rem;color:rgba(255,255,255,0.5);" id="sj-sorteio-data"></div>
             </div>
             <div id="sj-premio-box" style="text-align:center;">
               <div style="font-size:0.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,215,0,0.6);">Prêmio em Disputa</div>
               <div style="font-size:1rem;font-weight:700;color:#fff;" id="sj-premio-nome">—</div>
               <div style="font-size:0.72rem;color:rgba(255,255,255,0.5);" id="sj-premio-tipo"></div>
-              <div style="font-size:0.7rem;color:rgba(255,215,0,0.7);margin-top:2px;" id="sj-premio-cartela"></div>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <button id="sj-btn-iniciar" onclick="sjIniciarPremio()" style="padding:6px 12px;border-radius:8px;border:1px solid #FFD700;background:rgba(255,215,0,0.1);color:#FFD700;font-size:0.78rem;cursor:pointer;font-family:inherit;font-weight:600;">🎯 Iniciar Prêmio</button>
-              <button id="sj-btn-pausar" onclick="sjPausar()" style="display:none;padding:6px 12px;border-radius:8px;border:1px solid #f97316;background:rgba(249,115,22,0.1);color:#f97316;font-size:0.78rem;cursor:pointer;font-family:inherit;font-weight:600;">⏸ Pausar</button>
+              <button id="sj-btn-pausar"  onclick="sjPausar()"  style="display:none;padding:6px 12px;border-radius:8px;border:1px solid #f97316;background:rgba(249,115,22,0.1);color:#f97316;font-size:0.78rem;cursor:pointer;font-family:inherit;font-weight:600;">⏸ Pausar</button>
               <button id="sj-btn-retomar" onclick="sjRetomar()" style="display:none;padding:6px 12px;border-radius:8px;border:1px solid #22c55e;background:rgba(34,197,94,0.1);color:#22c55e;font-size:0.78rem;cursor:pointer;font-family:inherit;font-weight:600;">▶ Retomar</button>
             </div>
           </div>
@@ -6385,17 +6455,17 @@ function carregarAuditoria(page) {
                 <button onclick="sjVerificarGanhador()" style="padding:8px 12px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:0.82rem;cursor:pointer;font-family:inherit;font-weight:600;">Verificar</button>
               </div>
               <div id="sj-verificar-res" style="font-size:0.82rem;min-height:50px;"></div>
-              <div id="sj-btn-registrar-wrap" style="display:none;margin-top:8px;gap:6px;">
+              <div id="sj-btn-registrar-wrap" style="display:none;margin-top:8px;display:flex;gap:6px;">
                 <button onclick="sjRegistrarGanhador()" style="flex:1;padding:8px;border-radius:8px;border:none;background:#FFD700;color:#0d1b2a;font-size:0.82rem;cursor:pointer;font-family:inherit;font-weight:700;">🥇 Confirmar Ganhador</button>
                 <button onclick="sjDesclassificar()" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.82rem;cursor:pointer;font-family:inherit;font-weight:600;">❌ Desclassificar</button>
               </div>
             </div>
           </div>
 
-          <!-- Ganhadores + Prêmios -->
+          <!-- Ganhadores + Status prêmios -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
             <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;">
-              <div style="font-weight:700;font-size:0.82rem;margin-bottom:8px;color:var(--text2);">🥇 Ganhadores</div>
+              <div style="font-weight:700;font-size:0.82rem;margin-bottom:8px;color:var(--text2);">🥇 Ganhadores do Dia</div>
               <div id="sj-ganhadores" style="font-size:0.8rem;color:var(--text3);">Nenhum ganhador ainda.</div>
             </div>
             <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;">
@@ -6407,9 +6477,23 @@ function carregarAuditoria(page) {
         </div>
       </div>
 
+      <!-- ═══ ABA AUDITORIA ═══ -->
+      <div id="sorteio-aba-auditoria" style="display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+          <label style="font-size:0.82rem;color:var(--text2);font-weight:600;">Evento:</label>
+          <select id="aud-evento-sel" onchange="audCarregar()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text);font-size:0.85rem;font-family:inherit;min-width:220px;">
+            <option value="">Selecione um evento...</option>
+          </select>
+        </div>
+        <div id="aud-conteudo">
+          <div style="text-align:center;color:var(--text3);padding:40px;font-size:0.85rem;">Selecione um evento para ver o relatório de ganhadores.</div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
+
 
 <!-- MODAL DESMEMBRAR LOTE -->
 <div id="modal-desmembrar" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:2000;align-items:center;justify-content:center;padding:20px;">
@@ -7599,759 +7683,692 @@ document.getElementById('modal-vincular-lote').addEventListener('click', functio
 });
 
 // ── SORTEIO ──────────────────────────────────────────────
-var _sorteioAtual = null;
+var _sorteioAtual = null;   // dia ativo no sortear
+var _eventoAtual  = null;   // evento selecionado
 var _sjPremioAtual = null;
 var _sjGanhadorVerificado = null;
-var _nsPremios = []; // prêmios do form de novo sorteio
+var _evPremios = [];        // prêmios do form de novo dia
+var _pmCatalogo = [];       // catálogo de prêmios
 
 function abrirSorteio() {
   document.getElementById('modal-sorteio').style.display = 'flex';
-  sorteioAba('sorteios');
+  sorteioAba('eventos');
 }
 
 function fecharSorteio() {
   document.getElementById('modal-sorteio').style.display = 'none';
-}
-
-function abrirTelao() {
-  if (!_sorteioAtual) { alert('Selecione um sorteio primeiro!'); return; }
-  window.open('/sorteio/'+_sorteioAtual.id+'/telao', '_blank');
+  document.getElementById('sorteio-btn-telao').style.display = 'none';
 }
 
 function sorteioAba(aba) {
-  ['sorteios','sortear'].forEach(function(a) {
-    var el = document.getElementById('sorteio-aba-'+a);
-    if (el) el.style.display = a===aba ? '' : 'none';
+  ['premios','eventos','sortear','auditoria'].forEach(function(a) {
     var btn = document.getElementById('stab-'+a);
-    if (btn) {
-      btn.style.borderBottomColor = a===aba ? '#FFD700' : 'transparent';
-      btn.style.color = a===aba ? '#FFD700' : 'var(--text3)';
-      btn.style.fontWeight = a===aba ? '700' : '600';
-    }
+    var div = document.getElementById('sorteio-aba-'+a);
+    if (btn) btn.style.borderBottomColor = a===aba ? '#FFD700' : 'transparent';
+    if (btn) btn.style.color = a===aba ? '#FFD700' : 'var(--text3)';
+    if (div) div.style.display = a===aba ? '' : 'none';
   });
-  if (aba==='sorteios') sorteioCarregarLista();
-  if (aba==='sortear')  sjAtualizar();
+  if (aba==='premios')   pmCarregar();
+  if (aba==='eventos')   evCarregar();
+  if (aba==='auditoria') audPopularSelect();
 }
 
-// ── PRÊMIOS EMBUTIDOS NO SORTEIO ─────────────────────────
-function nsAdicionarPremio() {
-  _nsPremios.push({nome:'', tipo_batida:'cartela_cheia', cartela_intervalo:'', foto_base64:''});
-  nsRenderizarPremios();
-}
+// ════════════════════════════════════════════════════════
+// ABA PRÊMIOS — Catálogo reutilizável
+// ════════════════════════════════════════════════════════
 
-function nsRenderizarPremios() {
-  var el = document.getElementById('ns-premios-lista');
-  if (!el) return;
-  if (!_nsPremios.length) {
-    el.innerHTML = '<div style="color:var(--text3);font-size:0.78rem;padding:8px;text-align:center;">Nenhum prêmio adicionado. Clique em + Adicionar.</div>';
-    return;
-  }
-  el.innerHTML = _nsPremios.map(function(p, i) {
-    return '<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg2);">' +
-      // Foto
-      (p.foto_base64
-        ? '<div style="position:relative;"><img src="'+p.foto_base64+'" style="width:100%;height:80px;object-fit:cover;">' +
-          '<button onclick="nsPremioRemoverFoto('+i+')" style="position:absolute;top:4px;right:4px;padding:2px 6px;border-radius:5px;border:none;background:rgba(0,0,0,0.5);color:#fff;font-size:0.7rem;cursor:pointer;">✕</button></div>'
-        : '<div style="border:2px dashed var(--border);border-radius:0;padding:8px;text-align:center;cursor:pointer;font-size:0.72rem;color:var(--text3);" onclick="nsPremioAbrirFoto('+i+')">📷 Adicionar foto</div>') +
-      '<input type="file" id="nsp-foto-'+i+'" accept="image/*" style="display:none;" onchange="nsPremioFoto('+i+',this)">' +
-      '<div style="padding:8px;display:flex;flex-direction:column;gap:6px;">' +
-        '<div style="display:flex;align-items:center;gap:6px;">' +
-          '<span style="font-size:0.72rem;color:var(--text3);font-weight:700;min-width:16px;">'+(i+1)+'.</span>' +
-          '<input type="text" value="'+p.nome+'" placeholder="Nome do prêmio *" onchange="_nsPremios['+i+'].nome=this.value"' +
-            ' style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:0.8rem;font-family:inherit;">' +
-          '<button onclick="_nsPremios.splice('+i+',1);nsRenderizarPremios()" style="padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;font-family:inherit;">✕</button>' +
-        '</div>' +
-        '<div style="display:flex;gap:6px;">' +
-          '<select onchange="_nsPremios['+i+'].tipo_batida=this.value" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:0.78rem;font-family:inherit;">' +
-            '<option value="cartela_cheia"'+(p.tipo_batida==='cartela_cheia'?' selected':'')+'>Cartela Cheia</option>' +
-            '<option value="linha_h"'+(p.tipo_batida==='linha_h'?' selected':'')+'>Linha Horizontal</option>' +
-            '<option value="linha_v"'+(p.tipo_batida==='linha_v'?' selected':'')+'>Linha Vertical</option>' +
-            '<option value="diagonal"'+(p.tipo_batida==='diagonal'?' selected':'')+'>Diagonal</option>' +
-            '<option value="quatro_cantos"'+(p.tipo_batida==='quatro_cantos'?' selected':'')+'>Quatro Cantos</option>' +
-          '</select>' +
-          '<input type="text" value="'+p.cartela_intervalo+'" placeholder="Nº cartela (ex: 5)" onchange="_nsPremios['+i+'].cartela_intervalo=this.value"' +
-            ' style="width:130px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:0.78rem;font-family:inherit;">' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-}
-
-function nsPremioAbrirFoto(idx) {
-  var input = document.getElementById('nsp-foto-'+idx);
-  if (input) input.click();
-}
-
-function nsPremioRemoverFoto(idx) {
-  _nsPremios[idx].foto_base64 = '';
-  nsRenderizarPremios();
-}
-
-function nsPremioFoto(idx, input) {
-  var file = input.files[0];
-  if (!file) return;
-  if (file.size > 5*1024*1024) { alert('Foto muito grande! Máx 5MB.'); return; }
-  var r = new FileReader();
-  r.onload = function(e) { _nsPremios[idx].foto_base64 = e.target.result; nsRenderizarPremios(); };
-  r.readAsDataURL(file);
-}
-
-// Logo do sorteio
-function nsSelecionarLogo(input) {
-  var file = input.files[0];
-  if (!file) return;
-  if (file.size > 5*1024*1024) { alert('Máx 5MB.'); return; }
-  var r = new FileReader();
-  r.onload = function(e) {
-    document.getElementById('ns-logo-base64').value = e.target.result;
-    document.getElementById('ns-logo-img').src = e.target.result;
-    document.getElementById('ns-logo-preview').style.display = '';
-    document.getElementById('ns-logo-upload').style.display = 'none';
-  };
-  r.readAsDataURL(file);
-}
-
-function nsDropLogo(e) {
-  e.preventDefault();
-  var file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) {
-    var input = document.getElementById('ns-logo-input');
-    var dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
-    nsSelecionarLogo(input);
-  }
-}
-
-function nsRemoverLogo() {
-  document.getElementById('ns-logo-base64').value = '';
-  document.getElementById('ns-logo-img').src = '';
-  document.getElementById('ns-logo-preview').style.display = 'none';
-  document.getElementById('ns-logo-upload').style.display = '';
-  document.getElementById('ns-logo-input').value = '';
-}
-
-function nsCriarSorteio() {
-  var nome = (document.getElementById('ns-nome').value||'').trim();
-  var data = (document.getElementById('ns-data').value||'').trim();
-  var logo = document.getElementById('ns-logo-base64').value||'';
-  var msg  = document.getElementById('ns-msg');
-  if (!nome) { msg.innerHTML = '<span style="color:var(--red);">⚠️ Digite o nome do sorteio</span>'; return; }
-  if (!_nsPremios.length) { msg.innerHTML = '<span style="color:var(--red);">⚠️ Adicione ao menos um prêmio</span>'; return; }
-  for (var i=0; i<_nsPremios.length; i++) {
-    if (!(_nsPremios[i].nome||'').trim()) { msg.innerHTML = '<span style="color:var(--red);">⚠️ Preencha o nome do '+(i+1)+'º prêmio</span>'; return; }
-  }
-  msg.innerHTML = '<span style="color:var(--text3);">⏳ Criando...</span>';
-  var premiosPayload = _nsPremios.map(function(p, i) {
-    return {nome: p.nome, tipo_batida: p.tipo_batida, cartela_intervalo: p.cartela_intervalo||'', foto_base64: p.foto_base64||'', ordem: i+1};
-  });
-  fetch('/api/sorteio', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({nome:nome, data:data, logo_base64:logo, premios:premiosPayload})
-  }).then(function(r){ return r.json(); }).then(function(d){
-    if (d.ok) {
-      msg.innerHTML = '<span style="color:var(--green);">✅ '+d.msg+'</span>';
-      document.getElementById('ns-nome').value = '';
-      document.getElementById('ns-data').value = '';
-      nsRemoverLogo();
-      _nsPremios = [];
-      nsRenderizarPremios();
-      sorteioCarregarLista();
-    } else { msg.innerHTML = '<span style="color:var(--red);">❌ '+d.msg+'</span>'; }
-  }).catch(function(e){ msg.innerHTML = '<span style="color:var(--red);">❌ Erro: '+e.message+'</span>'; });
-}
-
-// ── SORTEIOS ──────────────────────────────────────────────
-function sorteioCarregarLista() {
-  var el = document.getElementById('sorteio-lista');
-  if (!el) return;
-  fetch('/api/sorteio').then(function(r){ return r.json(); }).then(function(d){
-    if (!d.sorteios||!d.sorteios.length) {
-      el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:30px;font-size:0.82rem;">Nenhum sorteio cadastrado.</div>';
+function pmCarregar() {
+  fetch('/api/premios').then(r=>r.json()).then(function(d) {
+    _pmCatalogo = d.premios || [];
+    var el = document.getElementById('pm-lista');
+    if (!_pmCatalogo.length) {
+      el.innerHTML = '<div style="color:var(--text3);font-size:0.82rem;padding:20px;text-align:center;grid-column:1/-1;">Nenhum prêmio cadastrado.</div>';
       return;
     }
-    el.innerHTML = d.sorteios.map(function(s) {
-      var ativo = s.status==='ativo';
-      var sel = _sorteioAtual && _sorteioAtual.id===s.id;
-      return '<div style="padding:10px 14px;border-radius:10px;border:1px solid '+(sel?'var(--blue)':'var(--border)')+';background:'+(sel?'rgba(59,130,246,0.06)':'var(--bg3)')+';display:flex;align-items:center;gap:10px;">' +
-        '<div style="flex:1;">' +
-          '<div style="font-weight:600;font-size:0.88rem;">' + s.nome + '</div>' +
-          '<div style="font-size:0.7rem;color:var(--text3);margin-top:2px;">' + (s.data||'') + (s.data?' · ':'') + (ativo?'🟢 Ativo':'⚫ Encerrado') + '</div>' +
-        '</div>' +
-        '<button onclick="sorteioSelecionar('+s.id+')" style="padding:5px 12px;border-radius:6px;border:none;background:'+(sel?'var(--green)':'var(--blue)')+';color:#fff;font-size:0.78rem;cursor:pointer;font-family:inherit;font-weight:600;">'+(sel?'✓ Ativo':'Selecionar')+'</button>' +
-        '<button onclick="sorteioDeletar('+s.id+')" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--red);font-size:0.78rem;cursor:pointer;font-family:inherit;">🗑</button>' +
-      '</div>';
+    el.innerHTML = _pmCatalogo.map(function(p) {
+      var fotoHTML = p.tem_foto
+        ? '<img src="/api/premios/'+p.id+'/foto" style="width:100%;height:100px;object-fit:cover;border-radius:6px 6px 0 0;">'
+        : '<div style="width:100%;height:60px;display:flex;align-items:center;justify-content:center;font-size:2rem;">🏆</div>';
+      var tipoBadge = {'cartela_cheia':'Cartela Cheia','linha':'Linha','quadra':'Quadra','diagonal':'Diagonal','livre':'Livre'};
+      return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;" onclick="pmEditar('+p.id+')">'
+        + fotoHTML
+        + '<div style="padding:8px 10px;">'
+        + '<div style="font-weight:700;font-size:0.85rem;margin-bottom:2px;">'+escH(p.nome)+'</div>'
+        + '<div style="font-size:0.7rem;color:var(--text3);">'+(tipoBadge[p.tipo_batida]||p.tipo_batida)+'</div>'
+        + (p.descricao ? '<div style="font-size:0.72rem;color:var(--text3);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escH(p.descricao)+'</div>' : '')
+        + '<div style="display:flex;gap:6px;margin-top:8px;">'
+        + '<button onclick="event.stopPropagation();pmEditar('+p.id+')" style="flex:1;padding:4px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);font-size:0.72rem;cursor:pointer;font-family:inherit;">✏️ Editar</button>'
+        + '<button onclick="event.stopPropagation();pmDeletar('+p.id+',\''+escH(p.nome)+'\')" style="flex:1;padding:4px;border-radius:6px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;font-family:inherit;">🗑 Excluir</button>'
+        + '</div></div></div>';
     }).join('');
   });
 }
 
-function sorteioSelecionar(id) {
-  fetch('/api/sorteio/'+id).then(function(r){ return r.json(); }).then(function(d){
-    if (!d.ok) { alert(d.msg); return; }
-    _sorteioAtual = d.sorteio;
-    _sorteioAtual.premios    = d.premios;
-    _sorteioAtual.numeros    = d.numeros;
-    _sorteioAtual.ganhadores = d.ganhadores;
-    document.getElementById('sorteio-btn-telao').style.display = '';
-    sorteioCarregarLista();
-    sorteioAba('sortear');
+function pmNovo() {
+  document.getElementById('pm-id').value = '';
+  document.getElementById('pm-nome').value = '';
+  document.getElementById('pm-tipo').value = 'cartela_cheia';
+  document.getElementById('pm-descricao').value = '';
+  document.getElementById('pm-foto-base64').value = '';
+  document.getElementById('pm-foto-preview').style.display = 'none';
+  document.getElementById('pm-foto-upload').style.display = '';
+  document.getElementById('pm-msg').innerHTML = '';
+  document.getElementById('pm-form-titulo').textContent = '➕ Novo Prêmio';
+}
+
+function pmEditar(id) {
+  var p = _pmCatalogo.find(function(x){ return x.id===id; });
+  if (!p) return;
+  document.getElementById('pm-id').value = p.id;
+  document.getElementById('pm-nome').value = p.nome;
+  document.getElementById('pm-tipo').value = p.tipo_batida;
+  document.getElementById('pm-descricao').value = p.descricao || '';
+  document.getElementById('pm-foto-base64').value = '';
+  document.getElementById('pm-msg').innerHTML = '';
+  document.getElementById('pm-form-titulo').textContent = '✏️ Editando: ' + p.nome;
+  if (p.tem_foto) {
+    var img = document.getElementById('pm-foto-img');
+    img.src = '/api/premios/'+p.id+'/foto';
+    document.getElementById('pm-foto-preview').style.display = '';
+    document.getElementById('pm-foto-upload').style.display = 'none';
+  } else {
+    document.getElementById('pm-foto-preview').style.display = 'none';
+    document.getElementById('pm-foto-upload').style.display = '';
+  }
+}
+
+function pmSalvar() {
+  var id       = document.getElementById('pm-id').value;
+  var nome     = document.getElementById('pm-nome').value.trim();
+  var tipo     = document.getElementById('pm-tipo').value;
+  var descricao= document.getElementById('pm-descricao').value.trim();
+  var fotoB64  = document.getElementById('pm-foto-base64').value;
+  var msg      = document.getElementById('pm-msg');
+  if (!nome) { msg.innerHTML='<span style="color:var(--red);">Nome obrigatório</span>'; return; }
+  msg.innerHTML = '<span style="color:var(--text3);">Salvando...</span>';
+  fetch('/api/premios', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({id:id?parseInt(id):null, nome, tipo_batida:tipo, descricao, foto_base64:fotoB64})
+  }).then(r=>r.json()).then(function(d) {
+    msg.innerHTML = d.ok
+      ? '<span style="color:var(--green);">✅ '+d.msg+'</span>'
+      : '<span style="color:var(--red);">'+d.msg+'</span>';
+    if (d.ok) { pmNovo(); pmCarregar(); }
   });
 }
 
-function sorteioDeletar(id) {
-  if (!confirm('Remover este sorteio e todos os seus dados?')) return;
-  fetch('/api/sorteio/'+id, {method:'DELETE'}).then(function(r){ return r.json(); }).then(function(d){
-    if (d.ok) {
-      if (_sorteioAtual && _sorteioAtual.id===id) {
-        _sorteioAtual = null;
-        document.getElementById('sorteio-btn-telao').style.display = 'none';
-        var sem = document.getElementById('sorteio-jogar-sem');
-        var wrap = document.getElementById('sorteio-jogar-wrap');
-        if (sem) sem.style.display = '';
-        if (wrap) wrap.style.display = 'none';
-      }
-      sorteioCarregarLista();
-    } else { alert(d.msg); }
+function pmDeletar(id, nome) {
+  if (!confirm('Excluir prêmio "'+nome+'"?')) return;
+  fetch('/api/premios/'+id, {method:'DELETE'}).then(r=>r.json()).then(function(d) {
+    if (d.ok) pmCarregar();
+    else alert(d.msg);
   });
 }
 
-// ── SORTEAR ───────────────────────────────────────────────
-function sjAtualizar() {
-  if (!_sorteioAtual) return;
-  fetch('/api/sorteio/'+_sorteioAtual.id+'/estado')
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if (!d.ok) return;
-      _sorteioAtual.numeros    = d.numeros;
-      _sorteioAtual.premios    = d.premios;
-      _sorteioAtual.ganhadores = d.ganhadores;
-      var premioAt = d.premio_atual;
-      _sjPremioAtual = premioAt;
-      var pausado = d.pausado;
-      document.getElementById('sorteio-jogar-sem').style.display  = 'none';
-      document.getElementById('sorteio-jogar-wrap').style.display = '';
-      document.getElementById('sj-sorteio-nome').textContent = _sorteioAtual.nome||'—';
-      document.getElementById('sj-premio-nome').textContent  = premioAt ? premioAt.nome : '— Todos encerrados —';
-      document.getElementById('sj-premio-tipo').textContent  = premioAt ? _tipoLabel(premioAt.tipo_batida) : '';
-      document.getElementById('sj-premio-cartela').textContent = premioAt && premioAt.cartela_intervalo ? '🎫 Cartela: '+premioAt.cartela_intervalo : '';
-      var emAndamento = premioAt && premioAt.status==='em_andamento';
-      document.getElementById('sj-btn-iniciar').style.display  = (!emAndamento && premioAt) ? '' : 'none';
-      document.getElementById('sj-btn-pausar').style.display   = (emAndamento && !pausado) ? '' : 'none';
-      document.getElementById('sj-btn-retomar').style.display  = (emAndamento && pausado) ? '' : 'none';
-      document.getElementById('sj-aviso-pausado').style.display = pausado ? '' : 'none';
-      var btnChamar = document.getElementById('sj-btn-chamar');
-      var inpNumero = document.getElementById('sj-numero');
-      if (btnChamar) { btnChamar.disabled=pausado; btnChamar.style.opacity=pausado?'0.4':'1'; }
-      if (inpNumero) inpNumero.disabled = pausado;
-      document.getElementById('sj-count-label').textContent = d.numeros.length+' número(s) chamado(s)';
-      document.getElementById('sj-ultimos').innerHTML = d.numeros.slice(-15).reverse().map(function(n) {
-        return '<span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:'+_corNum(n)+';color:#0d1b2a;font-size:0.72rem;font-weight:700;">'+n+'</span>';
+function pmSelecionarFoto(input) {
+  var file = input.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('pm-foto-base64').value = e.target.result;
+    document.getElementById('pm-foto-img').src = e.target.result;
+    document.getElementById('pm-foto-preview').style.display = '';
+    document.getElementById('pm-foto-upload').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function pmDropFoto(e) {
+  e.preventDefault();
+  var file = e.dataTransfer.files[0]; if (!file) return;
+  var inp = document.getElementById('pm-foto-input');
+  var dt = new DataTransfer(); dt.items.add(file); inp.files = dt.files;
+  pmSelecionarFoto(inp);
+}
+
+function pmRemoverFoto() {
+  document.getElementById('pm-foto-base64').value = '';
+  document.getElementById('pm-foto-preview').style.display = 'none';
+  document.getElementById('pm-foto-upload').style.display = '';
+}
+
+// ════════════════════════════════════════════════════════
+// ABA EVENTOS
+// ════════════════════════════════════════════════════════
+
+function evCarregar() {
+  fetch('/api/eventos_sorteio').then(r=>r.json()).then(function(d) {
+    var lista = document.getElementById('ev-lista');
+    var eventos = d.eventos || [];
+    if (!eventos.length) {
+      lista.innerHTML = '<div style="text-align:center;color:var(--text3);padding:30px;font-size:0.82rem;">Nenhum evento cadastrado.</div>';
+      return;
+    }
+    lista.innerHTML = eventos.map(function(ev) {
+      var statusCor = ev.status==='ativo' ? '#22c55e' : '#6b7280';
+      var diasHTML = (ev.dias||[]).map(function(d) {
+        var sc = d.status==='encerrado'?'#6b7280':d.status==='ativo'?'#22c55e':'#f59e0b';
+        var dataFmt = d.data ? ' — '+d.data.split('-').reverse().join('/') : '';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--bg2);border-radius:6px;margin-top:4px;">'
+          + '<div style="font-size:0.78rem;">'
+          + '<span style="font-weight:600;">'+escH(d.nome)+'</span>'
+          + '<span style="color:var(--text3);font-size:0.72rem;">'+dataFmt+'</span>'
+          + '</div>'
+          + '<div style="display:flex;gap:5px;align-items:center;">'
+          + '<span style="font-size:0.65rem;color:'+sc+';font-weight:700;">'+d.status.toUpperCase()+'</span>'
+          + '<button onclick="evSelecionarDia('+ev.id+','+d.id+')" style="padding:2px 8px;border-radius:5px;border:1px solid #FFD700;background:rgba(255,215,0,0.08);color:#FFD700;font-size:0.68rem;cursor:pointer;font-family:inherit;">🎯 Sortear</button>'
+          + '<button onclick="evDeletarDia('+ev.id+','+d.id+',\''+escH(d.nome)+'\')" style="padding:2px 6px;border-radius:5px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.68rem;cursor:pointer;font-family:inherit;">🗑</button>'
+          + '</div></div>';
       }).join('');
-      var sg = document.getElementById('sj-ganhadores');
-      if (d.ganhadores && d.ganhadores.length) {
-        sg.innerHTML = d.ganhadores.map(function(g) {
-          return '<div style="padding:6px 8px;border-radius:7px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);margin-bottom:4px;">' +
-            '<span style="color:var(--green);font-weight:700;font-size:0.82rem;">🥇 '+(g.nome_ganhador||'—')+'</span>' +
-            '<span style="color:var(--text3);font-size:0.72rem;margin-left:6px;">'+g.premio_nome+' · Cartela '+(g.numero_cartela||'—')+'</span></div>';
-        }).join('');
-      } else { sg.innerHTML = '<div style="color:var(--text3);font-size:0.78rem;">Nenhum ganhador ainda.</div>'; }
-      var sp = document.getElementById('sj-premios-status');
-      if (sp && d.premios) {
-        sp.innerHTML = d.premios.map(function(p) {
-          var cor = p.status==='encerrado'?'var(--green)':p.status==='em_andamento'?'#FFD700':'var(--text3)';
-          var ic  = p.status==='encerrado'?'✅':p.status==='em_andamento'?'🎯':'⏳';
-          return '<div style="font-size:0.78rem;color:'+cor+';margin-bottom:3px;">'+ic+' '+p.nome+(p.cartela_intervalo?' · Cartela '+p.cartela_intervalo:'')+'</div>';
-        }).join('');
+
+      return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+        + '<div>'
+        + '<div style="font-weight:700;font-size:0.92rem;">'+escH(ev.nome)+'</div>'
+        + (ev.descricao ? '<div style="font-size:0.75rem;color:var(--text3);">'+escH(ev.descricao)+'</div>' : '')
+        + '</div>'
+        + '<div style="display:flex;gap:6px;align-items:center;">'
+        + '<span style="font-size:0.7rem;color:'+statusCor+';font-weight:700;">'+ev.status.toUpperCase()+'</span>'
+        + '<button onclick="evSelecionarEvento('+ev.id+',\''+escH(ev.nome)+'\')" style="padding:3px 10px;border-radius:6px;border:1px solid var(--blue);background:transparent;color:var(--blue);font-size:0.72rem;cursor:pointer;font-family:inherit;">+ Dia</button>'
+        + '<button onclick="evDeletarEvento('+ev.id+',\''+escH(ev.nome)+'\')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.72rem;cursor:pointer;font-family:inherit;">🗑</button>'
+        + '</div></div>'
+        + '<div style="font-size:0.72rem;color:var(--text3);margin-bottom:4px;">'+(ev.total_dias||0)+' dia(s) cadastrado(s)</div>'
+        + diasHTML
+        + '</div>';
+    }).join('');
+  });
+}
+
+function evCriarEvento() {
+  var nome = document.getElementById('ev-nome').value.trim();
+  var desc = document.getElementById('ev-descricao').value.trim();
+  var msg  = document.getElementById('ev-msg');
+  if (!nome) { msg.innerHTML='<span style="color:var(--red);">Nome obrigatório</span>'; return; }
+  msg.innerHTML='<span style="color:var(--text3);">Salvando...</span>';
+  fetch('/api/eventos_sorteio', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({nome, descricao:desc})
+  }).then(r=>r.json()).then(function(d) {
+    msg.innerHTML = d.ok
+      ? '<span style="color:var(--green);">✅ '+d.msg+'</span>'
+      : '<span style="color:var(--red);">'+d.msg+'</span>';
+    if (d.ok) {
+      document.getElementById('ev-nome').value='';
+      document.getElementById('ev-descricao').value='';
+      evCarregar();
+    }
+  });
+}
+
+function evSelecionarEvento(id, nome) {
+  _eventoAtual = id;
+  document.getElementById('ev-dia-evento-nome').textContent = nome;
+  document.getElementById('ev-form-dia').style.display = '';
+  _evPremios = [];
+  evRenderPremios();
+  document.getElementById('ev-dia-nome').value = '';
+  document.getElementById('ev-dia-data').value = '';
+  document.getElementById('ev-dia-msg').innerHTML = '';
+  document.getElementById('ev-dia-nome').focus();
+}
+
+function evAdicionarPremio() {
+  // Carrega catálogo e abre select popup
+  fetch('/api/premios').then(r=>r.json()).then(function(d) {
+    _pmCatalogo = d.premios||[];
+    evAbrirSeletorPremio();
+  });
+}
+
+function evAbrirSeletorPremio() {
+  var opcoes = _pmCatalogo.map(function(p) {
+    return '<option value="'+p.id+'">'+escH(p.nome)+' ('+p.tipo_batida+')</option>';
+  }).join('');
+
+  var html = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:6px;">'
+    + '<div style="font-size:0.78rem;font-weight:600;color:var(--text2);margin-bottom:8px;">Selecionar do catálogo ou criar novo:</div>'
+    + '<select id="ev-pm-sel" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:0.82rem;font-family:inherit;margin-bottom:8px;">'
+    + '<option value="">— Novo prêmio avulso —</option>'
+    + opcoes
+    + '</select>'
+    + '<div id="ev-pm-campos" style="display:flex;flex-direction:column;gap:6px;">'
+    + '<input type="text" id="ev-pm-nome" placeholder="Nome do prêmio *" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:0.82rem;font-family:inherit;">'
+    + '<select id="ev-pm-tipo" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:0.82rem;font-family:inherit;">'
+    + '<option value="cartela_cheia">Cartela Cheia</option><option value="linha">Linha</option><option value="quadra">Quadra</option><option value="diagonal">Diagonal</option><option value="livre">Livre</option>'
+    + '</select>'
+    + '</div>'
+    + '<div style="display:flex;gap:6px;margin-top:8px;">'
+    + '<button onclick="evConfirmarPremio()" style="flex:1;padding:6px;border-radius:6px;border:none;background:var(--blue);color:#fff;font-size:0.78rem;cursor:pointer;font-family:inherit;">✅ Adicionar</button>'
+    + '<button onclick="evFecharSeletorPremio()" style="padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:0.78rem;cursor:pointer;font-family:inherit;">Cancelar</button>'
+    + '</div></div>';
+
+  var container = document.createElement('div');
+  container.id = 'ev-pm-seletor';
+  container.innerHTML = html;
+  document.getElementById('ev-premios-lista').appendChild(container);
+
+  // Ao selecionar do catálogo, preenche campos
+  document.getElementById('ev-pm-sel').addEventListener('change', function() {
+    var pid = this.value;
+    if (pid) {
+      var p = _pmCatalogo.find(function(x){ return x.id==pid; });
+      if (p) {
+        document.getElementById('ev-pm-nome').value = p.nome;
+        document.getElementById('ev-pm-tipo').value = p.tipo_batida;
+        document.getElementById('ev-pm-campos').style.opacity = '0.5';
       }
-    });
+    } else {
+      document.getElementById('ev-pm-nome').value = '';
+      document.getElementById('ev-pm-tipo').value = 'cartela_cheia';
+      document.getElementById('ev-pm-campos').style.opacity = '1';
+    }
+  });
+}
+
+function evFecharSeletorPremio() {
+  var sel = document.getElementById('ev-pm-seletor');
+  if (sel) sel.remove();
+}
+
+function evConfirmarPremio() {
+  var pid   = document.getElementById('ev-pm-sel').value;
+  var nome  = document.getElementById('ev-pm-nome').value.trim();
+  var tipo  = document.getElementById('ev-pm-tipo').value;
+  if (!nome) { alert('Informe o nome do prêmio'); return; }
+  _evPremios.push({ nome, tipo_batida:tipo, premio_ref_id: pid ? parseInt(pid) : null });
+  evFecharSeletorPremio();
+  evRenderPremios();
+}
+
+function evRenderPremios() {
+  var lista = document.getElementById('ev-premios-lista');
+  if (!_evPremios.length) {
+    lista.innerHTML = '<div style="font-size:0.75rem;color:var(--text3);padding:6px 0;">Nenhum prêmio adicionado.</div>';
+    return;
+  }
+  var tipoBadge = {'cartela_cheia':'Cheia','linha':'Linha','quadra':'Quadra','diagonal':'Diagonal','livre':'Livre'};
+  lista.innerHTML = _evPremios.map(function(p, i) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-radius:6px;padding:5px 8px;">'
+      + '<div><span style="font-size:0.72rem;color:var(--text3);">'+(i+1)+'.</span> <span style="font-size:0.82rem;font-weight:600;">'+escH(p.nome)+'</span> <span style="font-size:0.68rem;color:var(--text3);">('+tipoBadge[p.tipo_batida]+')</span></div>'
+      + '<button onclick="evRemoverPremio('+i+')" style="padding:2px 7px;border-radius:4px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.68rem;cursor:pointer;font-family:inherit;">✕</button>'
+      + '</div>';
+  }).join('');
+}
+
+function evRemoverPremio(i) {
+  _evPremios.splice(i, 1);
+  evRenderPremios();
+}
+
+function evCriarDia() {
+  if (!_eventoAtual) { alert('Selecione um evento'); return; }
+  var nome = document.getElementById('ev-dia-nome').value.trim();
+  var data = document.getElementById('ev-dia-data').value;
+  var msg  = document.getElementById('ev-dia-msg');
+  if (!nome) { msg.innerHTML='<span style="color:var(--red);">Nome do dia obrigatório</span>'; return; }
+  if (!_evPremios.length) { msg.innerHTML='<span style="color:var(--red);">Adicione ao menos um prêmio</span>'; return; }
+  msg.innerHTML='<span style="color:var(--text3);">Salvando...</span>';
+  fetch('/api/eventos_sorteio/'+_eventoAtual+'/dias', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({nome, data, premios: _evPremios})
+  }).then(r=>r.json()).then(function(d) {
+    msg.innerHTML = d.ok
+      ? '<span style="color:var(--green);">✅ '+d.msg+'</span>'
+      : '<span style="color:var(--red);">'+d.msg+'</span>';
+    if (d.ok) {
+      _evPremios = [];
+      document.getElementById('ev-dia-nome').value = '';
+      document.getElementById('ev-dia-data').value = '';
+      evRenderPremios();
+      evCarregar();
+    }
+  });
+}
+
+function evDeletarDia(eid, sid, nome) {
+  if (!confirm('Remover "'+nome+'" deste evento? Todos os números e ganhadores serão apagados.')) return;
+  fetch('/api/eventos_sorteio/'+eid+'/dias/'+sid, {method:'DELETE'}).then(r=>r.json()).then(function(d) {
+    if (d.ok) evCarregar(); else alert(d.msg);
+  });
+}
+
+function evDeletarEvento(id, nome) {
+  if (!confirm('Remover evento "'+nome+'" e todos os seus dias? Esta ação é irreversível.')) return;
+  fetch('/api/eventos_sorteio/'+id, {method:'DELETE'}).then(r=>r.json()).then(function(d) {
+    if (d.ok) { evCarregar(); if (_eventoAtual==id) { _eventoAtual=null; document.getElementById('ev-form-dia').style.display='none'; } }
+    else alert(d.msg);
+  });
+}
+
+function evSelecionarDia(eid, sid) {
+  fetch('/api/sorteio/'+sid).then(r=>r.json()).then(function(d) {
+    if (!d.ok) { alert('Erro ao carregar o dia'); return; }
+    _sorteioAtual = d.sorteio;
+    _sorteioAtual.premios   = d.premios;
+    _sorteioAtual.numeros   = d.numeros;
+    _sorteioAtual.ganhadores= d.ganhadores;
+    sorteioAba('sortear');
+    sjInicializar();
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// ABA SORTEAR
+// ════════════════════════════════════════════════════════
+
+function sjInicializar() {
+  if (!_sorteioAtual) return;
+  document.getElementById('sorteio-jogar-sem').style.display = 'none';
+  document.getElementById('sorteio-jogar-wrap').style.display = '';
+  document.getElementById('sorteio-btn-telao').style.display = '';
+
+  var s = _sorteioAtual;
+  document.getElementById('sj-sorteio-nome').textContent = s.nome;
+  document.getElementById('sj-sorteio-data').textContent = s.data ? s.data.split('-').reverse().join('/') : '';
+
+  // Premio atual
+  _sjPremioAtual = (s.premios||[]).find(function(p){ return p.status==='em_andamento'; })
+    || (s.premios||[]).find(function(p){ return p.status==='aguardando'; })
+    || null;
+  sjAtualizarPremioAtual();
+  sjAtualizarNumeros(s.numeros||[]);
+  sjAtualizarGanhadores(s.ganhadores||[]);
+  sjAtualizarStatusPremios(s.premios||[]);
+
+  var pausado = s.pausado;
+  document.getElementById('sj-aviso-pausado').style.display = pausado ? '' : 'none';
+  document.getElementById('sj-btn-pausar').style.display  = pausado ? 'none' : '';
+  document.getElementById('sj-btn-retomar').style.display = pausado ? '' : 'none';
+}
+
+function sjAtualizarPremioAtual() {
+  var p = _sjPremioAtual;
+  if (!p) {
+    document.getElementById('sj-premio-nome').textContent = 'Todos encerrados';
+    document.getElementById('sj-premio-tipo').textContent = '';
+    return;
+  }
+  var tipoBadge = {'cartela_cheia':'Cartela Cheia','linha':'Linha','quadra':'Quadra','diagonal':'Diagonal','livre':'Livre'};
+  document.getElementById('sj-premio-nome').textContent = p.nome;
+  document.getElementById('sj-premio-tipo').textContent = tipoBadge[p.tipo_batida]||p.tipo_batida;
+}
+
+function sjAtualizarNumeros(numeros) {
+  var count = numeros.length;
+  document.getElementById('sj-count-label').textContent = count + ' número'+(count!==1?'s':'');
+  var el = document.getElementById('sj-ultimos');
+  var recentes = numeros.slice().reverse().slice(0,20);
+  el.innerHTML = recentes.map(function(n,i) {
+    var num = typeof n==='object' ? n.numero : n;
+    var cor = i===0 ? '#FFD700' : 'var(--text2)';
+    var bg  = i===0 ? 'rgba(255,215,0,0.15)' : 'var(--bg2)';
+    return '<span style="padding:3px 7px;border-radius:6px;background:'+bg+';color:'+cor+';font-size:0.78rem;font-weight:700;border:1px solid '+(i===0?'rgba(255,215,0,0.4)':'var(--border)')+';">'+num+'</span>';
+  }).join('');
+}
+
+function sjAtualizarGanhadores(ganhadores) {
+  var el = document.getElementById('sj-ganhadores');
+  var validos = ganhadores.filter(function(g){ return !g.desclassificado; });
+  if (!validos.length) { el.innerHTML='<span style="color:var(--text3);">Nenhum ganhador ainda.</span>'; return; }
+  el.innerHTML = validos.map(function(g) {
+    return '<div style="padding:5px 8px;background:rgba(34,197,94,0.1);border-radius:6px;margin-bottom:4px;font-size:0.8rem;">'
+      + '🥇 <b>'+escH(g.nome_ganhador||'—')+'</b>'
+      + '<span style="color:var(--text3);"> | Cartela '+escH(g.numero_cartela||'—')+'</span>'
+      + '<span style="color:var(--text3);"> | '+escH(g.premio_nome||'—')+'</span>'
+      + '</div>';
+  }).join('');
+}
+
+function sjAtualizarStatusPremios(premios) {
+  var el = document.getElementById('sj-premios-status');
+  var cor = {aguardando:'var(--text3)', em_andamento:'#FFD700', encerrado:'#22c55e'};
+  var label = {aguardando:'Aguardando', em_andamento:'Em andamento', encerrado:'Encerrado'};
+  el.innerHTML = premios.map(function(p,i) {
+    return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);">'
+      + '<span style="font-size:0.7rem;color:var(--text3);">'+(i+1)+'.</span>'
+      + '<span style="flex:1;font-size:0.8rem;">'+escH(p.nome)+'</span>'
+      + '<span style="font-size:0.68rem;font-weight:700;color:'+(cor[p.status]||'var(--text3)')+';">'+(label[p.status]||p.status)+'</span>'
+      + (p.status==='aguardando'&&_sjPremioAtual&&_sjPremioAtual.id!==p.id
+         ? '<button onclick="sjIniciarPremioById('+p.id+')" style="padding:2px 7px;border-radius:4px;border:1px solid var(--blue);background:transparent;color:var(--blue);font-size:0.65rem;cursor:pointer;font-family:inherit;">Iniciar</button>'
+         : '')
+      + '</div>';
+  }).join('');
 }
 
 function sjIniciarPremio() {
-  if (!_sorteioAtual||!_sjPremioAtual) return;
-  fetch('/api/sorteio/'+_sorteioAtual.id+'/premio/'+_sjPremioAtual.id+'/iniciar',{method:'POST',headers:{'Content-Type':'application/json'}})
-    .then(function(r){ return r.json(); }).then(function(d){ if(d.ok) sjAtualizar(); });
+  if (!_sjPremioAtual) return;
+  sjIniciarPremioById(_sjPremioAtual.id);
 }
 
-function sjPausar() {
+function sjIniciarPremioById(pid) {
   if (!_sorteioAtual) return;
-  fetch('/api/sorteio/'+_sorteioAtual.id+'/pausar',{method:'POST',headers:{'Content-Type':'application/json'}})
-    .then(function(r){ return r.json(); }).then(function(d){ if(d.ok) sjAtualizar(); });
-}
-
-function sjRetomar() {
-  if (!_sorteioAtual) return;
-  fetch('/api/sorteio/'+_sorteioAtual.id+'/retomar',{method:'POST',headers:{'Content-Type':'application/json'}})
-    .then(function(r){ return r.json(); }).then(function(d){ if(d.ok) sjAtualizar(); });
+  fetch('/api/sorteio/'+_sorteioAtual.id+'/premio/'+pid+'/iniciar', {method:'POST'})
+    .then(r=>r.json()).then(function(d) {
+      if (d.ok) {
+        _sjPremioAtual = _sorteioAtual.premios.find(function(p){ return p.id===pid; });
+        if (_sjPremioAtual) { _sjPremioAtual.status='em_andamento'; }
+        _sorteioAtual.premios.forEach(function(p){ if(p.id!==pid && p.status==='em_andamento') p.status='encerrado'; });
+        sjAtualizarPremioAtual();
+        sjAtualizarStatusPremios(_sorteioAtual.premios);
+      }
+    });
 }
 
 function sjChamarNumero() {
   if (!_sorteioAtual) return;
-  var num = parseInt(document.getElementById('sj-numero').value);
+  var n = parseInt(document.getElementById('sj-numero').value);
   var msg = document.getElementById('sj-msg');
-  if (!num||num<1||num>75) { msg.innerHTML = '<span style="color:var(--red);">⚠️ Digite um número entre 1 e 75</span>'; return; }
-  fetch('/api/sorteio/'+_sorteioAtual.id+'/numero',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({numero:num})})
-    .then(function(r){ return r.json(); }).then(function(d){
-      if (d.ok) {
-        msg.innerHTML = '<span style="color:var(--green);">✅ Número '+num+' chamado!</span>';
-        document.getElementById('sj-numero').value='';
-        document.getElementById('sj-numero').focus();
-        sjAtualizar();
-      } else { msg.innerHTML = '<span style="color:var(--red);">❌ '+d.msg+'</span>'; }
-    });
+  if (!n||n<1||n>75) { msg.innerHTML='<span style="color:var(--red);">Número inválido (1-75)</span>'; return; }
+  fetch('/api/sorteio/'+_sorteioAtual.id+'/numero', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({numero:n})
+  }).then(r=>r.json()).then(function(d) {
+    if (d.ok) {
+      _sorteioAtual.numeros = _sorteioAtual.numeros || [];
+      _sorteioAtual.numeros.push({numero:n});
+      sjAtualizarNumeros(_sorteioAtual.numeros);
+      document.getElementById('sj-numero').value='';
+      msg.innerHTML='<span style="color:var(--green);">✅ Número '+n+' chamado</span>';
+      setTimeout(function(){ msg.innerHTML=''; }, 2000);
+    } else {
+      msg.innerHTML='<span style="color:var(--red);">'+d.msg+'</span>';
+    }
+  });
 }
 
 function sjDesfazer() {
   if (!_sorteioAtual) return;
-  fetch('/api/sorteio/'+_sorteioAtual.id+'/numero',{method:'DELETE'})
-    .then(function(r){ return r.json(); }).then(function(d){
-      var msg = document.getElementById('sj-msg');
-      if (d.ok) { msg.innerHTML='<span style="color:var(--text3);">↩ Número '+d.numero+' removido</span>'; sjAtualizar(); }
-      else { msg.innerHTML='<span style="color:var(--red);">❌ '+d.msg+'</span>'; }
-    });
-}
-
-function sjVerificarGanhador() {
-  if (!_sorteioAtual||!_sjPremioAtual) { alert('Inicie um prêmio primeiro!'); return; }
-  var cartela = document.getElementById('sj-cartela').value.trim();
-  if (!cartela) { alert('Digite o número da cartela'); return; }
-  var res  = document.getElementById('sj-verificar-res');
-  var wrap = document.getElementById('sj-btn-registrar-wrap');
-  _sjGanhadorVerificado = null;
-  wrap.style.display = 'none';
-  res.innerHTML = '<span style="color:var(--text3);">⏳ Verificando...</span>';
-  fetch('/api/sorteio/'+_sorteioAtual.id+'/verificar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({numero_cartela:cartela,premio_id:_sjPremioAtual.id})})
-    .then(function(r){ return r.json(); }).then(function(d){
+  fetch('/api/sorteio/'+_sorteioAtual.id+'/numero', {method:'DELETE'})
+    .then(r=>r.json()).then(function(d) {
       if (d.ok) {
-        _sjGanhadorVerificado = {contato:d.contato, cartela:cartela};
-        res.innerHTML = '<div style="padding:8px;border-radius:8px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);">' +
-          '<div style="color:var(--green);font-weight:700;">✅ Cartela Válida e PAGA!</div>' +
-          '<div style="font-size:0.78rem;color:var(--text2);margin-top:3px;">👤 '+(d.contato.nome||'—')+'</div>' +
-          '<div style="font-size:0.72rem;color:var(--text3);">Lote '+d.contato.lote+' · '+d.contato.intervalo+'</div></div>';
-        wrap.style.display = 'flex';
-      } else if (d.paga===false) {
-        _sjGanhadorVerificado = {contato:null, cartela:cartela};
-        res.innerHTML = '<div style="padding:8px;border-radius:8px;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.3);color:#c2410c;">⚠️ '+d.msg+'</div>';
-        wrap.style.display = 'flex';
-      } else {
-        res.innerHTML = '<div style="padding:8px;border-radius:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--red);">❌ '+d.msg+'</div>';
+        _sorteioAtual.numeros = (_sorteioAtual.numeros||[]).filter(function(n,i,a){ return i<a.length-1; });
+        sjAtualizarNumeros(_sorteioAtual.numeros);
+        document.getElementById('sj-msg').innerHTML='<span style="color:var(--text3);">↩ Número '+d.numero+' removido</span>';
+        setTimeout(function(){ document.getElementById('sj-msg').innerHTML=''; }, 2000);
       }
     });
 }
 
-function sjRegistrarGanhador() {
-  if (!_sorteioAtual||!_sjPremioAtual||!_sjGanhadorVerificado) return;
-  fetch('/api/sorteio/'+_sorteioAtual.id+'/ganhador',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({premio_id:_sjPremioAtual.id,contato_id:_sjGanhadorVerificado.contato?_sjGanhadorVerificado.contato.id:null,numero_cartela:_sjGanhadorVerificado.cartela,nome_ganhador:_sjGanhadorVerificado.contato?_sjGanhadorVerificado.contato.nome:'—'})
-  }).then(function(r){ return r.json(); }).then(function(d){
+function sjPausar() {
+  if (!_sorteioAtual) return;
+  fetch('/api/sorteio/'+_sorteioAtual.id+'/pausar', {method:'POST'}).then(r=>r.json()).then(function(d) {
     if (d.ok) {
-      document.getElementById('sj-verificar-res').innerHTML = '<div style="color:var(--green);font-weight:700;">🥇 '+d.msg+'</div>';
-      document.getElementById('sj-btn-registrar-wrap').style.display = 'none';
-      document.getElementById('sj-cartela').value = '';
-      _sjGanhadorVerificado = null;
-      if (d.todos_encerrados) alert('🎉 Todos os prêmios foram sorteados!');
-      sjAtualizar();
+      _sorteioAtual.pausado = 1;
+      document.getElementById('sj-aviso-pausado').style.display='';
+      document.getElementById('sj-btn-pausar').style.display='none';
+      document.getElementById('sj-btn-retomar').style.display='';
     }
+  });
+}
+
+function sjRetomar() {
+  if (!_sorteioAtual) return;
+  fetch('/api/sorteio/'+_sorteioAtual.id+'/retomar', {method:'POST'}).then(r=>r.json()).then(function(d) {
+    if (d.ok) {
+      _sorteioAtual.pausado = 0;
+      document.getElementById('sj-aviso-pausado').style.display='none';
+      document.getElementById('sj-btn-pausar').style.display='';
+      document.getElementById('sj-btn-retomar').style.display='none';
+    }
+  });
+}
+
+function sjVerificarGanhador() {
+  if (!_sorteioAtual || !_sjPremioAtual) { alert('Inicie um prêmio primeiro'); return; }
+  var cartela = document.getElementById('sj-cartela').value.trim();
+  var res = document.getElementById('sj-verificar-res');
+  var wrap = document.getElementById('sj-btn-registrar-wrap');
+  if (!cartela) { res.innerHTML='<span style="color:var(--red);">Informe o número da cartela</span>'; return; }
+  res.innerHTML='<span style="color:var(--text3);">Verificando...</span>';
+  wrap.style.display='none';
+  fetch('/api/sorteio/'+_sorteioAtual.id+'/verificar', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({numero_cartela:cartela, premio_id:_sjPremioAtual.id})
+  }).then(r=>r.json()).then(function(d) {
+    if (!d.ok) {
+      res.innerHTML='<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:8px;color:var(--red);font-size:0.82rem;">❌ '+escH(d.msg)+'</div>';
+      wrap.style.display='none';
+    } else if (!d.paga) {
+      res.innerHTML='<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:8px;color:#f59e0b;font-size:0.82rem;">⚠️ '+escH(d.msg)+'</div>';
+      wrap.style.display='none';
+    } else {
+      _sjGanhadorVerificado = d.contato;
+      res.innerHTML='<div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:8px;font-size:0.82rem;">'
+        +'<div style="color:var(--green);font-weight:700;margin-bottom:4px;">✅ Cartela válida e paga!</div>'
+        +'<div><b>'+escH(d.contato.nome||'—')+'</b></div>'
+        +'<div style="color:var(--text3);">Lote: '+escH(String(d.contato.lote||'—'))+' | Cartelas: '+escH(d.contato.intervalo||'—')+'</div>'
+        +'</div>';
+      wrap.style.display='flex';
+      sjPausar();
+    }
+  });
+}
+
+function sjRegistrarGanhador() {
+  if (!_sorteioAtual || !_sjPremioAtual || !_sjGanhadorVerificado) return;
+  fetch('/api/sorteio/'+_sorteioAtual.id+'/ganhador', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      premio_id: _sjPremioAtual.id,
+      contato_id: _sjGanhadorVerificado.id,
+      numero_cartela: _sjGanhadorVerificado.intervalo,
+      nome_ganhador: _sjGanhadorVerificado.nome
+    })
+  }).then(r=>r.json()).then(function(d) {
+    if (d.ok) {
+      _sjGanhadorVerificado = null;
+      document.getElementById('sj-cartela').value='';
+      document.getElementById('sj-verificar-res').innerHTML='';
+      document.getElementById('sj-btn-registrar-wrap').style.display='none';
+      // Atualiza prêmio atual
+      if (_sjPremioAtual) _sjPremioAtual.status='encerrado';
+      _sjPremioAtual = (_sorteioAtual.premios||[]).find(function(p){ return p.status==='aguardando'; }) || null;
+      sjAtualizarPremioAtual();
+      sjAtualizarStatusPremios(_sorteioAtual.premios||[]);
+      // Recarrega dados do sorteio para refletir ganhador
+      fetch('/api/sorteio/'+_sorteioAtual.id).then(r=>r.json()).then(function(dd) {
+        if (dd.ok) { _sorteioAtual.ganhadores=dd.ganhadores; sjAtualizarGanhadores(dd.ganhadores); }
+      });
+      sjRetomar();
+      if (d.todos_encerrados) {
+        document.getElementById('sj-msg').innerHTML='<span style="color:#FFD700;font-weight:700;">🎉 Todos os prêmios foram entregues!</span>';
+      }
+    } else { alert(d.msg); }
   });
 }
 
 function sjDesclassificar() {
-  if (!_sorteioAtual||!_sjPremioAtual||!_sjGanhadorVerificado) return;
-  var motivo = _sjGanhadorVerificado.contato===null ? 'Cartela não paga' : 'Desclassificado pelo operador';
-  fetch('/api/sorteio/'+_sorteioAtual.id+'/desclassificar',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({premio_id:_sjPremioAtual.id,numero_cartela:_sjGanhadorVerificado.cartela,motivo:motivo})
-  }).then(function(r){ return r.json(); }).then(function(d){
+  if (!_sorteioAtual || !_sjPremioAtual) return;
+  var cartela = document.getElementById('sj-cartela').value.trim();
+  var motivo  = prompt('Motivo da desclassificação:', 'Cartela inválida') || 'Desclassificado';
+  fetch('/api/sorteio/'+_sorteioAtual.id+'/desclassificar', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({premio_id:_sjPremioAtual.id, numero_cartela:cartela, motivo})
+  }).then(r=>r.json()).then(function(d) {
     if (d.ok) {
-      document.getElementById('sj-verificar-res').innerHTML = '<div style="color:var(--text3);font-size:0.82rem;">❌ '+d.msg+'</div>';
-      document.getElementById('sj-btn-registrar-wrap').style.display = 'none';
-      document.getElementById('sj-cartela').value = '';
-      _sjGanhadorVerificado = null;
-      sjAtualizar();
+      document.getElementById('sj-cartela').value='';
+      document.getElementById('sj-verificar-res').innerHTML='<span style="color:var(--text3);">Desclassificado. Continue o sorteio.</span>';
+      document.getElementById('sj-btn-registrar-wrap').style.display='none';
+      _sjGanhadorVerificado=null;
+      sjRetomar();
     }
   });
 }
 
-function _tipoLabel(t) {
-  return {'cartela_cheia':'Cartela Cheia','linha_h':'Linha Horizontal','linha_v':'Linha Vertical','diagonal':'Diagonal','quatro_cantos':'Quatro Cantos'}[t]||t;
+function abrirTelao() {
+  if (_sorteioAtual) window.open('/sorteio/'+_sorteioAtual.id+'/telao','_blank');
 }
 
-function _corNum(n) {
-  if (n<=15) return '#4CC9F0'; if (n<=30) return '#F72585';
-  if (n<=45) return '#FFD60A'; if (n<=60) return '#4ADE80'; return '#FF6B35';
+// ════════════════════════════════════════════════════════
+// ABA AUDITORIA
+// ════════════════════════════════════════════════════════
+
+function audPopularSelect() {
+  fetch('/api/eventos_sorteio').then(r=>r.json()).then(function(d) {
+    var sel = document.getElementById('aud-evento-sel');
+    var eventos = d.eventos||[];
+    sel.innerHTML = '<option value="">Selecione um evento...</option>'
+      + eventos.map(function(e){ return '<option value="'+e.id+'">'+escH(e.nome)+'</option>'; }).join('');
+  });
 }
-</script>
+
+function audCarregar() {
+  var eid = document.getElementById('aud-evento-sel').value;
+  var el  = document.getElementById('aud-conteudo');
+  if (!eid) { el.innerHTML='<div style="text-align:center;color:var(--text3);padding:40px;">Selecione um evento.</div>'; return; }
+  el.innerHTML='<div style="text-align:center;color:var(--text3);padding:30px;">Carregando...</div>';
+  fetch('/api/eventos_sorteio/'+eid+'/relatorio').then(r=>r.json()).then(function(d) {
+    if (!d.ok) { el.innerHTML='<div style="color:var(--red);">'+d.msg+'</div>'; return; }
+    var ev = d.evento;
+    var diasHTML = (d.dias||[]).map(function(item) {
+      var dia = item.dia;
+      var ganhadores = item.ganhadores || [];
+      var validos = ganhadores.filter(function(g){ return !g.desclassificado; });
+      var desclass = ganhadores.filter(function(g){ return g.desclassificado; });
+      var dataFmt  = dia.data ? dia.data.split('-').reverse().join('/') : '—';
+
+      var tabelaG = validos.length
+        ? '<table style="width:100%;border-collapse:collapse;font-size:0.78rem;margin-top:8px;">'
+          + '<thead><tr style="background:var(--bg3);">'
+          + '<th style="padding:6px 8px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);">Prêmio</th>'
+          + '<th style="padding:6px 8px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);">Ganhador</th>'
+          + '<th style="padding:6px 8px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);">Cartela</th>'
+          + '<th style="padding:6px 8px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);">Telefone</th>'
+          + '<th style="padding:6px 8px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);">Verificado em</th>'
+          + '</tr></thead><tbody>'
+          + validos.map(function(g, i) {
+              return '<tr style="border-bottom:1px solid var(--border);background:'+(i%2?'var(--bg2)':'var(--bg3)')+'">'
+                +'<td style="padding:6px 8px;">'+escH(g.premio_nome||'—')+'</td>'
+                +'<td style="padding:6px 8px;font-weight:600;">'+escH(g.nome_ganhador||g.nome_contato||'—')+'</td>'
+                +'<td style="padding:6px 8px;">'+escH(g.numero_cartela||'—')+'</td>'
+                +'<td style="padding:6px 8px;color:var(--text3);">'+escH(g.telefone||'—')+'</td>'
+                +'<td style="padding:6px 8px;color:var(--text3);white-space:nowrap;">'+escH(g.verificado_em||'—')+'</td>'
+                +'</tr>';
+            }).join('')
+          + '</tbody></table>'
+        : '<div style="color:var(--text3);font-size:0.8rem;padding:8px 0;">Nenhum ganhador neste dia.</div>';
+
+      var desclassHTML = desclass.length
+        ? '<div style="margin-top:8px;font-size:0.75rem;color:var(--red);">Desclassificados: '
+          + desclass.map(function(g){ return escH(g.numero_cartela||'—')+' ('+escH(g.nome_ganhador||'—')+')'; }).join(', ')
+          + '</div>'
+        : '';
+
+      return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;">'
+        + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+        + '<div style="font-weight:700;font-size:0.9rem;">'+escH(dia.nome)+'</div>'
+        + '<div style="font-size:0.75rem;color:var(--text3);">'+dataFmt+'</div>'
+        + '<div style="font-size:0.7rem;font-weight:700;color:'+(dia.status==='encerrado'?'#6b7280':'#22c55e')+';margin-left:auto;">'+dia.status.toUpperCase()+'</div>'
+        + '</div>'
+        + tabelaG + desclassHTML
+        + '</div>';
+    }).join('');
+
+    el.innerHTML = '<div style="font-weight:700;font-size:0.95rem;margin-bottom:16px;">📋 '+escH(ev.nome)+'</div>'
+      + (d.dias.length ? diasHTML : '<div style="color:var(--text3);padding:20px;text-align:center;">Nenhum dia cadastrado neste evento.</div>');
+  });
+}
 
 
-
-
-
-<!-- MODAL TROCAR SENHA -->
-<div id="modal-trocar-senha" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:3000;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fff;border:1px solid #cdd4e8;border-radius:14px;padding:28px;width:100%;max-width:420px;box-shadow:0 4px 32px rgba(15,23,42,0.12);animation:ncIn 0.2s ease;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
-      <div style="font-size:1.05rem;font-weight:700;color:#0f172a;">🔒 Trocar Senha</div>
-      <button id="ts-btn-fechar" onclick="fecharTrocarSenha()" style="background:#eef1f7;border:1px solid #e2e6f0;color:#4a5578;width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:14px;">
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:0.78rem;font-weight:600;color:#4a5578;text-transform:uppercase;letter-spacing:0.5px;">Senha atual</label>
-        <input type="password" id="ts-atual" placeholder="Sua senha atual" style="background:#eef1f7;border:1px solid #e2e6f0;border-radius:8px;color:#0f172a;padding:9px 12px;font-family:inherit;font-size:0.88rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor=''">
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:0.78rem;font-weight:600;color:#4a5578;text-transform:uppercase;letter-spacing:0.5px;">Nova senha</label>
-        <input type="password" id="ts-nova" placeholder="Mínimo 6 caracteres" style="background:#eef1f7;border:1px solid #e2e6f0;border-radius:8px;color:#0f172a;padding:9px 12px;font-family:inherit;font-size:0.88rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor=''">
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:0.78rem;font-weight:600;color:#4a5578;text-transform:uppercase;letter-spacing:0.5px;">Confirmar nova senha</label>
-        <input type="password" id="ts-conf" placeholder="Repita a nova senha" style="background:#eef1f7;border:1px solid #e2e6f0;border-radius:8px;color:#0f172a;padding:9px 12px;font-family:inherit;font-size:0.88rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor=''">
-      </div>
-    </div>
-    <div id="ts-msg" style="font-size:0.82rem;margin-top:12px;min-height:16px;"></div>
-    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #e2e6f0;">
-      <button id="ts-btn-cancelar" onclick="fecharTrocarSenha()" style="background:#eef1f7;border:1px solid #e2e6f0;color:#4a5578;padding:8px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.88rem;font-weight:600;">Cancelar</button>
-      <button onclick="confirmarTrocarSenha()" style="background:#2563eb;border:none;color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.88rem;font-weight:600;">💾 Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL PRIMEIRO LOGIN - TROCA OBRIGATÓRIA -->
-<div id="modal-primeiro-login" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:9999;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fff;border:1px solid #cdd4e8;border-radius:14px;padding:28px;width:100%;max-width:420px;box-shadow:0 4px 32px rgba(15,23,42,0.12);animation:ncIn 0.2s ease;">
-    <div style="text-align:center;margin-bottom:20px;">
-      <div style="font-size:2rem;margin-bottom:8px;">🔐</div>
-      <div style="font-size:1.05rem;font-weight:700;color:#0f172a;">Bem-vindo! Crie sua senha</div>
-      <div style="font-size:0.82rem;color:#64748b;margin-top:6px;">Por segurança, você precisa definir uma nova senha antes de continuar.</div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:14px;">
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:0.78rem;font-weight:600;color:#4a5578;text-transform:uppercase;letter-spacing:0.5px;">Senha temporária</label>
-        <input type="password" id="pl-atual" placeholder="Senha que você recebeu" style="background:#eef1f7;border:1px solid #e2e6f0;border-radius:8px;color:#0f172a;padding:9px 12px;font-family:inherit;font-size:0.88rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor=''">
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:0.78rem;font-weight:600;color:#4a5578;text-transform:uppercase;letter-spacing:0.5px;">Nova senha</label>
-        <input type="password" id="pl-nova" placeholder="Mínimo 6 caracteres" style="background:#eef1f7;border:1px solid #e2e6f0;border-radius:8px;color:#0f172a;padding:9px 12px;font-family:inherit;font-size:0.88rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor=''">
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <label style="font-size:0.78rem;font-weight:600;color:#4a5578;text-transform:uppercase;letter-spacing:0.5px;">Confirmar nova senha</label>
-        <input type="password" id="pl-conf" placeholder="Repita a nova senha" style="background:#eef1f7;border:1px solid #e2e6f0;border-radius:8px;color:#0f172a;padding:9px 12px;font-family:inherit;font-size:0.88rem;outline:none;width:100%;transition:border-color 0.15s;" onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor=''">
-      </div>
-    </div>
-    <div id="pl-msg" style="font-size:0.82rem;margin-top:12px;min-height:16px;"></div>
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e6f0;">
-      <button onclick="confirmarPrimeiroLogin()" style="background:#2563eb;border:none;color:#fff;padding:10px 0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.88rem;font-weight:600;width:100%;">✅ Definir minha senha e entrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CAMISETAS -->
-<div id="modal-camisetas" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:1500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:95%;max-width:1600px;min-height:90vh;margin:auto;display:flex;flex-direction:column;overflow:hidden;">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-weight:700;font-size:1rem;">&#128085; Camisetas</span>
-      <button onclick="fecharCamisetas()" style="background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;">&#10005;</button>
-    </div>
-    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);padding:0 16px;">
-      <button id="cam-tab-pedidos"   onclick="camAba('pedidos')"   style="padding:10px 18px;border:none;border-bottom:3px solid var(--blue);background:transparent;color:var(--blue);font-weight:700;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#128203; Pedidos</button>
-      <button id="cam-tab-resumo"    onclick="camAba('resumo')"    style="padding:10px 18px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#128202; Resumo</button>
-      <button id="cam-tab-relatorio" onclick="camAba('relatorio')" style="padding:10px 18px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#128196; Relat&#243;rios</button>
-      <button id="cam-tab-tamanho"   onclick="camAba('tamanho')"   style="padding:10px 18px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#128085; Por Tamanho</button>
-      <button id="cam-tab-config"    onclick="camAba('config')"    style="padding:10px 18px;border:none;border-bottom:3px solid transparent;background:transparent;color:var(--text3);font-weight:600;font-size:0.84rem;cursor:pointer;font-family:inherit;margin-bottom:-2px;">&#9881; Config</button>
-    </div>
-    <div style="overflow-y:auto;max-height:76vh;padding:18px 20px;">
-
-      <!-- ABA PEDIDOS -->
-      <div id="cam-aba-pedidos">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
-          <input type="text" id="cam-busca" placeholder="Nome ou CPF..." oninput="camFiltrar()" style="padding:7px 11px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;width:180px;">
-          <select id="cam-filtro-status" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
-            <option value="">Todos status</option><option value="Pendente">&#9203; Pendente</option><option value="Pago">&#10003; Pago</option><option value="Cancelado">&#10005; Cancelado</option>
-          </select>
-          <select id="cam-filtro-tam" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
-            <option value="">Todos tam.</option><option value="N0">Nº 0</option><option value="N2">Nº 2</option><option value="N4">Nº 4</option><option value="N6">Nº 6</option><option value="N8">Nº 8</option><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>EXG</option><option>EXGG</option>
-          </select>
-          <select id="cam-filtro-equipe" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
-            <option value="">Todas</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option>
-          </select>
-          <select id="cam-filtro-lote" onchange="camFiltrar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
-            <option value="">Todos lotes</option>
-          </select>
-          <button onclick="camCarregar()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:7px;cursor:pointer;font-size:0.82rem;">&#128260;</button>
-          <span id="cam-totais" style="font-size:0.81rem;color:var(--text3);margin-left:auto;"></span>
-        </div>
-        <div id="cam-tabela" style="overflow-x:auto;"></div>
-      </div>
-
-      <!-- ABA RESUMO -->
-      <div id="cam-aba-resumo" style="display:none;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-          <label style="font-size:0.78rem;color:var(--text3);">🎪 Filtrar por lote:</label>
-          <select id="cam-resumo-lote" onchange="camCarregarResumo()" style="padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
-            <option value="">Todos os lotes</option>
-          </select>
-        </div>
-        <div id="cam-resumo-conteudo"></div>
-      </div>
-
-      <!-- ABA RELATORIOS -->
-      <div id="cam-aba-relatorio" style="display:none;">
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;">
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:12px;">
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">CPF</label>
-              <input type="text" id="rel-cpf" placeholder="000.000.000-00" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Telefone</label>
-              <input type="text" id="rel-tel" placeholder="..." style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Tamanho</label>
-              <select id="rel-tam" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
-                <option value="">Todos</option><option value="N0">Nº 0</option><option value="N2">Nº 2</option><option value="N4">Nº 4</option><option value="N6">Nº 6</option><option value="N8">Nº 8</option><option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>EXG</option><option>EXGG</option></select></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Status pgto</label>
-              <select id="rel-status" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
-                <option value="">Todos</option><option value="Realizado">Realizado</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option><option value="Cancelado">Cancelado</option></select></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Forma pgto</label>
-              <input type="text" id="rel-forma" placeholder="PIX..." style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Equipe</label>
-              <select id="rel-equipe" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
-                <option value="">Todas</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option>
-              </select></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Data pgto De</label>
-              <input type="date" id="rel-pgto-de" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Data pgto At&#233;</label>
-              <input type="date" id="rel-pgto-ate" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Entregue</label>
-              <select id="rel-entregue" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
-                <option value="">Todos</option><option value="1">Sim</option><option value="0">N&#227;o</option></select></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Cadastro De</label>
-              <input type="date" id="rel-cad-de" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Cadastro At&#233;</label>
-              <input type="date" id="rel-cad-ate" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;"></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">&#127981; Lote</label>
-              <select id="rel-lote" style="padding:6px 9px;border-radius:6px;border:2px solid #6366f1;background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
-                <option value="">Todos</option>
-              </select></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Ordenar por</label>
-              <select id="rel-ordem" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
-                <option value="numero_pedido">N&#186; Pedido</option><option value="nome">Nome</option>
-                <option value="tamanho">Tamanho</option><option value="status">Status</option><option value="data_pgto">Data Pgto</option></select></div>
-            <div><label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Tipo</label>
-              <select id="rel-tipo" style="padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.82rem;width:100%;">
-                <option value="analitico">Anal&#237;tico</option><option value="sintetico">Sint&#233;tico</option></select></div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="camRelFiltrar()" style="background:#2563eb;border:none;color:#fff;padding:7px 16px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128269; Filtrar</button>
-            <button onclick="camRelLimpar()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;">Limpar</button>
-            <button onclick="camRelExportarExcel()" style="background:#16a34a;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128229; Excel</button>
-            <button onclick="camRelPreview()" style="background:#7c3aed;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128065; Preview</button>
-            <button onclick="camRelExportarPDF()" style="background:#ef4444;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128196; PDF/Imprimir</button>
-          </div>
-        </div>
-        <div id="cam-rel-totais-topo" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:0.82rem;margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap;"></div>
-        <div id="cam-rel-conteudo" style="overflow-x:auto;"></div>
-        <div id="cam-rel-totais-baixo" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:0.82rem;margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;"></div>
-      </div>
-
-      <!-- ABA POR TAMANHO -->
-      <div id="cam-aba-tamanho" style="display:none;">
-        <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
-          <select id="cam-tam-lote" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:2px solid #6366f1;background:var(--bg3);color:var(--text);font-size:0.82rem;">
-            <option value="">Todos os lotes</option>
-          </select>
-          <select id="cam-tam-status" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
-            <option value="">Todos status</option><option value="Pago">✓ Pago</option><option value="Pendente">⏳ Pendente</option><option value="Realizado">Realizado</option>
-          </select>
-          <select id="cam-tam-equipe" onchange="camTamCarregar()" style="padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.82rem;">
-            <option value="">Todas equipes</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option>
-          </select>
-          <button onclick="camTamCarregar()" style="background:#2563eb;border:none;color:#fff;padding:7px 16px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128260; Atualizar</button>
-          <button onclick="camTamExportarExcel()" style="background:#16a34a;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128229; Excel</button>
-          <button onclick="camTamPreview()" style="background:#7c3aed;border:none;color:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:0.82rem;font-weight:600;">&#128065; Preview/PDF</button>
-          <label style="font-size:0.8rem;color:var(--text3);display:flex;align-items:center;gap:5px;cursor:pointer;margin-left:4px;">
-            <input type="checkbox" id="cam-tam-sem-valores" style="width:auto;"> Sem valores
-          </label>
-        </div>
-        <div id="cam-tam-conteudo"><div style="text-align:center;padding:40px;color:var(--text3);">Clique em Atualizar para carregar.</div></div>
-      </div>
-
-      <!-- ABA CONFIG -->
-      <div id="cam-aba-config" style="display:none;max-width:560px;">
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
-          <h3 style="font-size:0.92rem;font-weight:700;margin-bottom:14px;color:var(--text);">&#9881; Configura&#231;&#245;es gerais</h3>
-          <label style="font-size:0.78rem;color:var(--text3);display:flex;align-items:center;gap:8px;margin-bottom:12px;"><input type="checkbox" id="cam-cfg-ativo" style="width:auto;"> Pedidos habilitados</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-            <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data in&#237;cio</label>
-              <input type="date" id="cam-cfg-inicio" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;"></div>
-            <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data fim</label>
-              <input type="date" id="cam-cfg-fim" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;"></div>
-          </div>
-          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Descri&#231;&#227;o (p&#225;gina p&#250;blica)</label>
-          <input type="text" id="cam-cfg-desc" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
-          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Chave PIX</label>
-          <input type="text" id="cam-cfg-pix" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
-          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Benefici&#225;rio</label>
-          <input type="text" id="cam-cfg-benef" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
-          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Celular para comprovante (WhatsApp)</label>
-          <input type="text" id="cam-cfg-celular" placeholder="63 9 0000-0000" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:0.83rem;width:100%;margin-bottom:12px;">
-          <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">&#127981; Lote vigente <span style="color:#6366f1;font-weight:700;">(novos pedidos serão atribuídos a este lote)</span></label>
-          <input type="number" id="cam-cfg-lote" min="1" step="1" value="1" style="padding:7px 10px;border-radius:6px;border:2px solid #6366f1;background:var(--bg2);color:var(--text);font-size:0.9rem;font-weight:700;width:120px;margin-bottom:16px;">
-          <h4 style="font-size:0.83rem;font-weight:700;margin-bottom:10px;color:var(--text);">&#128176; Valor por tamanho (R$)</h4>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;" id="cam-cfg-valores"></div>
-          <button onclick="camSalvarConfig()" style="background:#2563eb;border:none;color:#fff;padding:9px 20px;border-radius:7px;cursor:pointer;font-size:0.85rem;font-weight:600;">&#128190; Salvar</button>
-          <span id="cam-cfg-msg" style="font-size:0.82rem;margin-left:12px;"></span>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;">
-          <h3 style="font-size:0.92rem;font-weight:700;margin-bottom:14px;color:var(--text);">&#128247; Fotos da camiseta</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-            <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:6px;">Frente</label>
-              <input type="file" id="cam-foto-frente" accept="image/*" style="font-size:0.78rem;width:100%;">
-              <button onclick="camUploadFoto('frente')" style="margin-top:8px;background:#0891b2;border:none;color:#fff;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600;width:100%;">&#11014; Enviar frente</button>
-              <div id="cam-foto-frente-status" style="font-size:0.75rem;margin-top:4px;color:var(--text3);"></div></div>
-            <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:6px;">Verso</label>
-              <input type="file" id="cam-foto-verso" accept="image/*" style="font-size:0.78rem;width:100%;">
-              <button onclick="camUploadFoto('verso')" style="margin-top:8px;background:#0891b2;border:none;color:#fff;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600;width:100%;">&#11014; Enviar verso</button>
-              <div id="cam-foto-verso-status" style="font-size:0.75rem;margin-top:4px;color:var(--text3);"></div></div>
-          </div>
-          <div style="margin-top:14px;font-size:0.78rem;color:var(--text3);">&#128279; Link p&#250;blico: <a href="/camisetas" target="_blank" style="color:var(--blue);">/camisetas</a></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Pagar -->
-<div id="cam-modal-pagar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:380px;max-width:95vw;">
-    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;">&#10003; Confirmar Pagamento</h3>
-    <input type="hidden" id="cam-pagar-id">
-    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Data de pagamento</label>
-    <input type="date" id="cam-pagar-data" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:10px;">
-    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Forma de pagamento</label>
-    <select id="cam-pagar-forma" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:10px;">
-      <option value="PIX">PIX</option><option value="Dinheiro">Dinheiro</option><option value="Cart&#227;o D&#233;bito">Cart&#227;o D&#233;bito</option><option value="Cart&#227;o Cr&#233;dito">Cart&#227;o Cr&#233;dito</option>
-    </select>
-    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Valor pago (deixe em branco para quitar total)</label>
-    <div style="position:relative;margin-bottom:10px;">
-      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:0.85rem;color:var(--text3);">R$</span>
-      <input type="number" id="cam-pagar-valor" step="0.01" min="0" placeholder="0,00" style="padding:8px 10px 8px 32px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;">
-    </div>
-    <div id="cam-pagar-saldo" style="font-size:0.78rem;color:var(--text3);margin-bottom:10px;min-height:16px;"></div>
-    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Observa&#231;&#227;o</label>
-    <input type="text" id="cam-pagar-obs" placeholder="Opcional..." style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:20px;">
-    <div style="display:flex;gap:10px;">
-      <button id="cam-btn-confirmar-pagar" onclick="camConfirmarPagamento()" style="flex:1;background:#16a34a;border:none;color:#fff;padding:10px;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:700;">Confirmar</button>
-      <button onclick="document.getElementById('cam-modal-pagar').style.display='none'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:7px;cursor:pointer;">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Entregar -->
-<div id="cam-modal-entregar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:380px;max-width:95vw;">
-    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;">&#128230; Confirmar Entrega</h3>
-    <input type="hidden" id="cam-entregar-id">
-    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Data de entrega</label>
-    <input type="date" id="cam-entregar-data" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:10px;">
-    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Observa&#231;&#227;o</label>
-    <input type="text" id="cam-entregar-obs" placeholder="Opcional..." style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:20px;">
-    <div style="display:flex;gap:10px;">
-      <button onclick="camConfirmarEntrega()" style="flex:1;background:#0891b2;border:none;color:#fff;padding:10px;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:700;">Confirmar</button>
-      <button onclick="document.getElementById('cam-modal-entregar').style.display='none'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:7px;cursor:pointer;">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Editar -->
-<div id="cam-modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:460px;max-width:95vw;margin:auto;">
-    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;">&#9998; Editar Pedido — <span id="cam-ed-titulo"></span></h3>
-    <input type="hidden" id="cam-ed-id">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-      <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Nome completo *</label>
-        <input type="text" id="cam-ed-nome" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
-      <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Telefone</label>
-        <input type="text" id="cam-ed-tel" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
-      <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Tamanho *</label>
-        <select id="cam-ed-tam" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;">
-          <option value="N0">Nº 0 — Infantil</option><option value="N2">Nº 2 — Infantil</option><option value="N4">Nº 4 — Infantil</option><option value="N6">Nº 6 — Infantil</option><option value="N8">Nº 8 — Infantil</option><option value="PP">PP — Adulto</option><option value="P">P — Adulto</option><option value="M">M — Adulto</option><option value="G">G — Adulto</option><option value="GG">GG — Adulto</option><option value="EXG">EXG — Adulto</option><option value="EXGG">EXGG — Adulto</option></select></div>
-      <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data Nascimento</label>
-        <input type="date" id="cam-ed-nasc" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
-    </div>
-    <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Equipe</label>
-    <select id="cam-ed-equipe" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;margin-bottom:10px;"><option value="">— selecione —</option><option value="Bingo">Bingo</option><option value="Equipe de Arrecadação">Equipe de Arrecadação</option><option value="Equipe de Estrutura">Equipe de Estrutura</option><option value="Equipe de Caixa">Equipe de Caixa</option><option value="Bar">Bar</option><option value="Espetinho">Espetinho</option><option value="Batata Frita">Batata Frita</option><option value="Pastel">Pastel</option><option value="Cachorro-Quente">Cachorro-Quente</option><option value="Caldo">Caldo</option><option value="Maria Izabel">Maria Izabel</option><option value="Doces">Doces</option><option value="Espaço Criança">Espaço Criança</option><option value="Leilão">Leilão</option><option value="Apresentação Cultural">Apresentação Cultural</option><option value="Montagem">Montagem</option><option value="Ornamentação Cultural">Ornamentação Cultural</option><option value="Limpeza">Limpeza</option><option value="Segurança / Estacionamento">Segurança / Estacionamento</option><option value="Camisetas">Camisetas</option><option value="Vendas">Vendas</option><option value="Pascom e Comunicação Visual">Pascom e Comunicação Visual</option><option value="Coordenação Geral">Coordenação Geral</option><option value="Liturgia">Liturgia</option><option value="Loja Adorai">Loja Adorai</option></select>
-    <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Obs. cadastro</label>
-    <input type="text" id="cam-ed-obs-cad" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;margin-bottom:10px;">
-    <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Status pagamento</label>
-    <select id="cam-ed-status" onchange="camEdStatusChange()" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;margin-bottom:10px;">
-      <option value="Realizado">Realizado</option><option value="Pendente">Pendente</option><option value="Pago">Pago</option>
-    </select>
-    <div id="cam-ed-pgto-campos">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-        <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Forma pgto</label>
-          <select id="cam-ed-forma" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;">
-            <option value="">&#8212;</option><option value="PIX">PIX</option><option value="Dinheiro">Dinheiro</option><option value="Cart&#227;o D&#233;bito">Cart&#227;o D&#233;bito</option><option value="Cart&#227;o Cr&#233;dito">Cart&#227;o Cr&#233;dito</option></select></div>
-        <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data pgto</label>
-          <input type="date" id="cam-ed-data-pgto" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
-      </div>
-      <label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Obs. pagamento</label>
-      <input type="text" id="cam-ed-obs-pgto" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;margin-bottom:10px;">
-    </div>
-    <div id="cam-ed-entrega-campos" style="display:none;">
-      <label style="font-size:0.75rem;color:var(--text3);display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <input type="checkbox" id="cam-ed-entregue" style="width:auto;" onchange="camEdEntregueChange()"> Camiseta entregue</label>
-      <div id="cam-ed-data-entrega-wrap" style="display:none;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-          <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Data entrega</label>
-            <input type="date" id="cam-ed-data-entrega" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
-          <div><label style="font-size:0.75rem;color:var(--text3);display:block;margin-bottom:3px;">Obs. entrega</label>
-            <input type="text" id="cam-ed-obs-entrega" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.86rem;width:100%;"></div>
-        </div>
-      </div>
-    </div>
-    <div id="cam-ed-msg" style="font-size:0.8rem;min-height:18px;color:#ef4444;margin-bottom:10px;"></div>
-    <div style="display:flex;gap:10px;">
-      <button onclick="camSalvarEdicao()" style="flex:1;background:#2563eb;border:none;color:#fff;padding:10px;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:700;">Salvar</button>
-      <button onclick="document.getElementById('cam-modal-editar').style.display='none'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:7px;cursor:pointer;">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Info Pedido -->
-<div id="cam-modal-info" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:480px;max-width:95vw;margin:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="font-size:0.95rem;font-weight:700;">&#8505; Informações do Pedido</h3>
-      <div style="display:flex;gap:8px;">
-        <button onclick="camImprimirInfo()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:0.82rem;">🖨️ Imprimir</button>
-        <button onclick="document.getElementById('cam-modal-info').style.display='none'" style="background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;">&#10005;</button>
-      </div>
-    </div>
-    <div id="cam-info-conteudo"></div>
-  </div>
-</div>
-
-<!-- Modal Estorno -->
-<div id="cam-modal-estorno" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3000;align-items:center;justify-content:center;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:380px;max-width:95vw;">
-    <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;color:#b91c1c;">↩ Estornar Pagamento</h3>
-    <input type="hidden" id="cam-estorno-pgid">
-    <input type="hidden" id="cam-estorno-pedid">
-    <div id="cam-estorno-info" style="background:var(--bg3);border-radius:8px;padding:10px 14px;font-size:0.83rem;margin-bottom:14px;"></div>
-    <label style="font-size:0.76rem;color:var(--text3);display:block;margin-bottom:3px;">Motivo do estorno *</label>
-    <input type="text" id="cam-estorno-motivo" placeholder="Informe o motivo..." style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:0.87rem;width:100%;margin-bottom:20px;">
-    <div style="display:flex;gap:10px;">
-      <button onclick="camConfirmarEstorno()" style="flex:1;background:#b91c1c;border:none;color:#fff;padding:10px;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:700;">Confirmar Estorno</button>
-      <button onclick="document.getElementById('cam-modal-estorno').style.display='none'" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:7px;cursor:pointer;">Cancelar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Comprovante -->
-<div id="cam-modal-comprovante" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2500;align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:560px;max-width:95vw;margin:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="font-size:0.95rem;font-weight:700;">&#128206; Comprovante de Pagamento</h3>
-      <button onclick="document.getElementById('cam-modal-comprovante').style.display='none'" style="background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;">&#10005;</button>
-    </div>
-    <div id="cam-comprovante-conteudo" style="text-align:center;"></div>
-  </div>
-</div>
-
-<script>
-var _camDados    = [];
 var _camFiltrado = [];
 var _camSelecionados = new Set();
 var _camSortCol  = 'numero_pedido';

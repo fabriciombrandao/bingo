@@ -175,12 +175,24 @@ def init_db():
             tem_foto    INTEGER DEFAULT 0,
             criado_em   TEXT DEFAULT (datetime(\'now\',\'localtime\'))
         );
+        CREATE TABLE IF NOT EXISTS eventos_sorteio (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome        TEXT NOT NULL,
+            descricao   TEXT DEFAULT \'\',
+            logo_base64 TEXT DEFAULT \'\',
+            status      TEXT DEFAULT \'ativo\',
+            criado_em   TEXT DEFAULT (datetime(\'now\',\'localtime\'))
+        );
         CREATE TABLE IF NOT EXISTS sorteios (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome       TEXT NOT NULL,
-            data       TEXT DEFAULT \'\',
-            status     TEXT DEFAULT \'ativo\',
-            criado_em  TEXT DEFAULT (datetime(\'now\',\'localtime\'))
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            evento_id   INTEGER DEFAULT NULL,
+            numero_dia  INTEGER DEFAULT 1,
+            nome        TEXT NOT NULL,
+            data        TEXT DEFAULT \'\',
+            status      TEXT DEFAULT \'ativo\',
+            pausado     INTEGER DEFAULT 0,
+            logo_base64 TEXT DEFAULT \'\',
+            criado_em   TEXT DEFAULT (datetime(\'now\',\'localtime\'))
         );
         CREATE TABLE IF NOT EXISTS sorteio_premios (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -277,6 +289,20 @@ def init_db():
             "ALTER TABLE camisetas_pedidos ADD COLUMN comprovante_tipo TEXT DEFAULT ''",
             "ALTER TABLE camisetas_pedidos ADD COLUMN comprovante_em TEXT DEFAULT ''",
             "ALTER TABLE camisetas_pedidos ADD COLUMN lote INTEGER DEFAULT 1",
+            """CREATE TABLE IF NOT EXISTS eventos_sorteio (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                descricao TEXT DEFAULT '',
+                logo_base64 TEXT DEFAULT '',
+                status TEXT DEFAULT 'ativo',
+                criado_em TEXT DEFAULT (datetime('now','localtime'))
+            )""",
+            "ALTER TABLE sorteios ADD COLUMN evento_id INTEGER DEFAULT NULL",
+            "ALTER TABLE sorteios ADD COLUMN numero_dia INTEGER DEFAULT 1",
+            "ALTER TABLE sorteios ADD COLUMN pausado INTEGER DEFAULT 0",
+            "ALTER TABLE sorteios ADD COLUMN logo_base64 TEXT DEFAULT ''",
+            "ALTER TABLE sorteio_ganhadores ADD COLUMN desclassificado INTEGER DEFAULT 0",
+            "ALTER TABLE sorteio_ganhadores ADD COLUMN motivo_desclassificacao TEXT DEFAULT ''",
 
         ]:
             try: conn.execute(sql)
@@ -2981,6 +3007,199 @@ def api_premios_foto(pid):
         return Response(img_bytes, mimetype=mime)
     except:
         return "", 400
+
+
+# ══════════════════════════════════════════════════════════════
+# EVENTOS DE SORTEIO (entidade mãe)
+# ══════════════════════════════════════════════════════════════
+
+@app.route("/api/eventos_sorteio", methods=["GET"])
+@requer_login
+def api_eventos_listar():
+    with get_db() as conn:
+        rows = conn.execute("SELECT * FROM eventos_sorteio ORDER BY id DESC").fetchall()
+        result = []
+        for r in rows:
+            e = dict(r)
+            dias = conn.execute(
+                "SELECT id, numero_dia, nome, data, status FROM sorteios WHERE evento_id=? ORDER BY numero_dia",
+                (e["id"],)
+            ).fetchall()
+            e["dias"] = [dict(d) for d in dias]
+            e["total_dias"] = len(dias)
+            result.append(e)
+    return jsonify({"ok": True, "eventos": result})
+
+@app.route("/api/eventos_sorteio", methods=["POST"])
+@requer_login
+def api_eventos_criar():
+    d = request.get_json() or {}
+    nome      = (d.get("nome") or "").strip()
+    descricao = (d.get("descricao") or "").strip()
+    logo_b64  = (d.get("logo_base64") or "").strip()
+    if not nome:
+        return jsonify({"ok": False, "msg": "Nome do evento é obrigatório"})
+    with get_db() as conn:
+        cur = conn.execute(
+            "INSERT INTO eventos_sorteio (nome, descricao, logo_base64) VALUES (?,?,?)",
+            (nome, descricao, logo_b64)
+        )
+        eid = cur.lastrowid
+    log(f"Evento de sorteio '{nome}' criado por {session.get('usuario','?')}", "success")
+    return jsonify({"ok": True, "id": eid, "msg": "Evento criado!"})
+
+@app.route("/api/eventos_sorteio/<int:eid>", methods=["PUT"])
+@requer_login
+def api_eventos_editar(eid):
+    d = request.get_json() or {}
+    nome      = (d.get("nome") or "").strip()
+    descricao = (d.get("descricao") or "").strip()
+    logo_b64  = d.get("logo_base64")
+    if not nome:
+        return jsonify({"ok": False, "msg": "Nome é obrigatório"})
+    with get_db() as conn:
+        if logo_b64 is not None:
+            conn.execute("UPDATE eventos_sorteio SET nome=?, descricao=?, logo_base64=? WHERE id=?",
+                         (nome, descricao, logo_b64, eid))
+        else:
+            conn.execute("UPDATE eventos_sorteio SET nome=?, descricao=? WHERE id=?",
+                         (nome, descricao, eid))
+    return jsonify({"ok": True, "msg": "Evento atualizado!"})
+
+@app.route("/api/eventos_sorteio/<int:eid>", methods=["DELETE"])
+@requer_login
+def api_eventos_deletar(eid):
+    with get_db() as conn:
+        dias = conn.execute("SELECT id FROM sorteios WHERE evento_id=?", (eid,)).fetchall()
+        for dia in dias:
+            sid = dia["id"]
+            conn.execute("DELETE FROM sorteio_numeros WHERE sorteio_id=?", (sid,))
+            conn.execute("DELETE FROM sorteio_ganhadores WHERE sorteio_id=?", (sid,))
+            conn.execute("DELETE FROM sorteio_premios WHERE sorteio_id=?", (sid,))
+        conn.execute("DELETE FROM sorteios WHERE evento_id=?", (eid,))
+        conn.execute("DELETE FROM eventos_sorteio WHERE id=?", (eid,))
+    log(f"Evento {eid} removido", "info")
+    return jsonify({"ok": True, "msg": "Evento removido!"})
+
+@app.route("/api/eventos_sorteio/<int:eid>/logo")
+def api_evento_logo(eid):
+    with get_db() as conn:
+        row = conn.execute("SELECT logo_base64 FROM eventos_sorteio WHERE id=?", (eid,)).fetchone()
+    if not row or not row["logo_base64"]:
+        return "", 404
+    try:
+        import base64 as _b64
+        b64 = row["logo_base64"]
+        if "," in b64:
+            header, data = b64.split(",", 1)
+            mime = header.split(":")[1].split(";")[0] if ":" in header else "image/jpeg"
+        else:
+            data = b64
+            mime = "image/jpeg"
+        img_bytes = _b64.b64decode(data)
+        from flask import Response
+        return Response(img_bytes, mimetype=mime)
+    except Exception:
+        return "", 400
+
+# ── Dias de um evento ──────────────────────────────────────
+
+@app.route("/api/eventos_sorteio/<int:eid>/dias", methods=["GET"])
+@requer_login
+def api_evento_dias_listar(eid):
+    with get_db() as conn:
+        dias = conn.execute(
+            "SELECT * FROM sorteios WHERE evento_id=? ORDER BY numero_dia", (eid,)
+        ).fetchall()
+        result = []
+        for d in dias:
+            dia = dict(d)
+            premios = conn.execute(
+                "SELECT * FROM sorteio_premios WHERE sorteio_id=? ORDER BY ordem", (d["id"],)
+            ).fetchall()
+            ganhadores = conn.execute(
+                "SELECT sg.*, sp.nome as premio_nome FROM sorteio_ganhadores sg "
+                "JOIN sorteio_premios sp ON sg.premio_id=sp.id "
+                "WHERE sg.sorteio_id=? ORDER BY sg.id", (d["id"],)
+            ).fetchall()
+            dia["premios"] = [dict(p) for p in premios]
+            dia["ganhadores"] = [dict(g) for g in ganhadores]
+            result.append(dia)
+    return jsonify({"ok": True, "dias": result})
+
+@app.route("/api/eventos_sorteio/<int:eid>/dias", methods=["POST"])
+@requer_login
+def api_evento_dia_criar(eid):
+    d = request.get_json() or {}
+    nome    = (d.get("nome") or "").strip()
+    data    = (d.get("data") or "").strip()
+    premios = d.get("premios", [])
+    if not nome:
+        return jsonify({"ok": False, "msg": "Nome do dia é obrigatório"})
+    if not premios:
+        return jsonify({"ok": False, "msg": "Adicione ao menos um prêmio"})
+    with get_db() as conn:
+        evento = conn.execute("SELECT id FROM eventos_sorteio WHERE id=?", (eid,)).fetchone()
+        if not evento:
+            return jsonify({"ok": False, "msg": "Evento não encontrado"})
+        proximo_dia = conn.execute(
+            "SELECT COALESCE(MAX(numero_dia),0)+1 FROM sorteios WHERE evento_id=?", (eid,)
+        ).fetchone()[0]
+        cur = conn.execute(
+            "INSERT INTO sorteios (evento_id, numero_dia, nome, data, status) VALUES (?,?,?,?,?)",
+            (eid, proximo_dia, nome, data, "ativo")
+        )
+        sid = cur.lastrowid
+        for i, p in enumerate(premios):
+            foto = p.get("foto_base64") or ""
+            conn.execute(
+                "INSERT INTO sorteio_premios (sorteio_id, ordem, nome, tipo_batida, status, cartela_intervalo, foto_base64, tem_foto, premio_ref_id) VALUES (?,?,?,?,?,?,?,?,?)",
+                (sid, i+1, p.get("nome",""), p.get("tipo_batida","cartela_cheia"),
+                 "aguardando", p.get("cartela_intervalo",""), foto, 1 if foto else 0,
+                 p.get("premio_ref_id") or None)
+            )
+    log(f"Dia {proximo_dia} adicionado ao evento {eid}", "success")
+    return jsonify({"ok": True, "id": sid, "numero_dia": proximo_dia, "msg": f"Dia {proximo_dia} criado!"})
+
+@app.route("/api/eventos_sorteio/<int:eid>/dias/<int:sid>", methods=["DELETE"])
+@requer_login
+def api_evento_dia_deletar(eid, sid):
+    with get_db() as conn:
+        conn.execute("DELETE FROM sorteio_numeros WHERE sorteio_id=?", (sid,))
+        conn.execute("DELETE FROM sorteio_ganhadores WHERE sorteio_id=?", (sid,))
+        conn.execute("DELETE FROM sorteio_premios WHERE sorteio_id=?", (sid,))
+        conn.execute("DELETE FROM sorteios WHERE id=? AND evento_id=?", (sid, eid))
+    return jsonify({"ok": True, "msg": "Dia removido!"})
+
+@app.route("/api/eventos_sorteio/<int:eid>/relatorio")
+@requer_login
+def api_evento_relatorio(eid):
+    """Relatório completo de ganhadores do evento para auditoria."""
+    with get_db() as conn:
+        evento = conn.execute("SELECT * FROM eventos_sorteio WHERE id=?", (eid,)).fetchone()
+        if not evento:
+            return jsonify({"ok": False, "msg": "Evento não encontrado"})
+        dias = conn.execute(
+            "SELECT * FROM sorteios WHERE evento_id=? ORDER BY numero_dia", (eid,)
+        ).fetchall()
+        result = []
+        for dia in dias:
+            ganhadores = conn.execute(
+                """SELECT sg.*, sp.nome as premio_nome, sp.tipo_batida, sp.ordem as premio_ordem,
+                   c.nome as nome_contato, c.lote, c.intervalo, c.telefone
+                   FROM sorteio_ganhadores sg
+                   JOIN sorteio_premios sp ON sg.premio_id=sp.id
+                   LEFT JOIN contatos c ON sg.contato_id=c.id
+                   WHERE sg.sorteio_id=?
+                   ORDER BY sp.ordem, sg.id""",
+                (dia["id"],)
+            ).fetchall()
+            result.append({
+                "dia": dict(dia),
+                "ganhadores": [dict(g) for g in ganhadores]
+            })
+    return jsonify({"ok": True, "evento": dict(evento), "dias": result})
+
 
 @app.route("/api/sorteio", methods=["GET"])
 @requer_login
