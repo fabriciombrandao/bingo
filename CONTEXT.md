@@ -179,3 +179,11 @@ bingo-dev-update    # deploy testes
   - Ordenação persiste ao filtrar
 - Corrigido CONTEXT.md: comandos de update (`bingo-update` e `bingo-dev-update`)
 - Configurada memória automática do Claude: ao iniciar sessão do projeto Bingo, Claude clona o repo e lê o CONTEXT.md automaticamente sem precisar ser lembrado
+
+### Sessão 26/05/2026
+- Fix: modal-camisetas (div HTML com 309 linhas) removido acidentalmente no commit a0804cb (sistema de sorteio). Restaurado do commit 4167984 e reinserido antes do <script> principal (linha 6577)
+- Fix: addEventListener de #modal-novo-contato e #nc-valor estavam em <script> executado antes do HTML do modal existir no DOM → movidos para <script> inline após o fechamento do modal
+- Fix: val_total do dashboard calculado como soma das listas já carregadas (rows_pago + rows_pend + rows_disp) em vez de query separada que incluía registros com valor NULL
+- Fix banco: 27 registros com valor NULL/vazio e 4 com formato inválido (R$20,00 sem espaço, R$ sem número) corrigidos diretamente via SQLite para 'R$ 20,00'
+- Potencial Total agora exibe R$ 300.000,00 corretamente (15.000 cartelas × R$ 20,00)
+- Pendente: implementar validação/formatação do campo valor ao salvar no backend para evitar recorrência
