@@ -2765,7 +2765,7 @@ def api_resumo():
         rows_pago   = conn.execute("SELECT valor FROM contatos WHERE LOWER(status)='pago'").fetchall()
         rows_pend   = conn.execute("SELECT valor FROM contatos WHERE LOWER(status)='pendente'").fetchall()
         rows_disp   = conn.execute("SELECT valor FROM contatos WHERE LOWER(status)='disponivel'").fetchall()
-        rows_all    = conn.execute("SELECT valor FROM contatos WHERE LOWER(status) != 'desmembrado'").fetchall()
+        rows_all    = rows_pago + rows_pend + rows_disp
     cfg = carregar_config()
     cartelas_por_lote = int(cfg.get("cartelas_por_lote", 10) or 10)
     # Total de cartelas = lotes normais * cartelas_por_lote + cartelas unitárias
