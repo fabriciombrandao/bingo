@@ -2762,9 +2762,10 @@ def api_resumo():
         disponiveis_unit = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='disponivel' AND origem_id IS NOT NULL").fetchone()[0]
         desmembrados= conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='desmembrado'").fetchone()[0]
         outros      = total_lotes - pagos - pendentes - disponiveis
-        rows_pago   = conn.execute("SELECT valor FROM contatos WHERE LOWER(status)='pago'").fetchall()
-        rows_pend   = conn.execute("SELECT valor FROM contatos WHERE LOWER(status)='pendente'").fetchall()
-        rows_disp   = conn.execute("SELECT valor FROM contatos WHERE LOWER(status)='disponivel'").fetchall()
+        # Valor calculado pela regra de negocio: sem origem_id=lote cheio(200), com origem_id=cartela unit(20)
+        rows_pago   = conn.execute("SELECT CASE WHEN origem_id IS NULL THEN 200.0 ELSE 20.0 END FROM contatos WHERE LOWER(status)='pago'").fetchall()
+        rows_pend   = conn.execute("SELECT CASE WHEN origem_id IS NULL THEN 200.0 ELSE 20.0 END FROM contatos WHERE LOWER(status)='pendente'").fetchall()
+        rows_disp   = conn.execute("SELECT CASE WHEN origem_id IS NULL THEN 200.0 ELSE 20.0 END FROM contatos WHERE LOWER(status)='disponivel'").fetchall()
         rows_all    = rows_pago + rows_pend + rows_disp
     cfg = carregar_config()
     cartelas_por_lote = int(cfg.get("cartelas_por_lote", 10) or 10)
@@ -2774,9 +2775,8 @@ def api_resumo():
     val_pago       = sum(parse_valor(r[0]) for r in rows_pago)
     val_pendente   = sum(parse_valor(r[0]) for r in rows_pend)
     val_disponivel = sum(parse_valor(r[0]) for r in rows_disp)
-    # Potencial total = lotes × valor_lote da config (evita distorcao por valores nulos/errados)
-    _vl = parse_valor(cfg.get("valor_lote", "0"))
-    val_total = (pagos + pendentes + disponiveis) * _vl if _vl > 0 else sum(parse_valor(r[0]) for r in rows_all)
+    # Potencial total pela regra de negocio: lote cheio=R$200, cartela unit=R$20
+    val_total = sum(parse_valor(r[0]) for r in rows_all)
     return jsonify({
         "total":total_lotes, "pagos":pagos, "pendentes":pendentes, "disponiveis":disponiveis,
         "outros":outros, "invalidos":0, "disparar":pendentes, "pct_arrecadado":pct,
