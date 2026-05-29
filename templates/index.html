@@ -6352,7 +6352,7 @@ function carregarAuditoria(page) {
             <!-- Form novo dia (aparece ao selecionar evento) -->
             <div id="ev-form-dia" style="display:none;background:var(--bg3);border:1px solid rgba(255,215,0,0.3);border-radius:12px;padding:16px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <div style="font-weight:700;font-size:0.88rem;color:#FFD700;">➕ Adicionar Dia</div>
+                <div id="ev-form-dia-titulo" style="font-weight:700;font-size:0.88rem;color:#FFD700;">➕ Adicionar Dia</div>
                 <div style="font-size:0.72rem;color:rgba(255,215,0,0.7);" id="ev-dia-evento-nome">—</div>
               </div>
               <div style="display:flex;flex-direction:column;gap:10px;">
@@ -6377,7 +6377,7 @@ function carregarAuditoria(page) {
                   <div id="ev-premios-lista" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;"></div>
                 </div>
                 <div id="ev-dia-msg" style="font-size:0.78rem;min-height:14px;"></div>
-                <button onclick="evCriarDia()" style="padding:9px;border-radius:8px;border:none;background:#FFD700;color:#0d1b2a;font-size:0.88rem;cursor:pointer;font-family:inherit;font-weight:700;">📅 Adicionar Dia ao Evento</button>
+                <button id="ev-btn-salvar-dia" onclick="evSalvarDia()" style="padding:9px;border-radius:8px;border:none;background:#FFD700;color:#0d1b2a;font-size:0.88rem;cursor:pointer;font-family:inherit;font-weight:700;">📅 Adicionar Dia ao Evento</button>
               </div>
             </div>
           </div>
@@ -8002,6 +8002,7 @@ var _eventoAtual  = null;   // evento selecionado
 var _sjPremioAtual = null;
 var _sjGanhadorVerificado = null;
 var _evPremios = [];        // prêmios do form de novo dia
+var _evEditando = null;     // {eid, sid} quando editando um dia existente
 var _pmCatalogo = [];       // catálogo de prêmios
 
 function abrirSorteio() {
@@ -8170,6 +8171,7 @@ function evCarregar() {
           + '<div style="display:flex;gap:5px;align-items:center;">'
           + '<span style="font-size:0.65rem;color:'+sc+';font-weight:700;">'+d.status.toUpperCase()+'</span>'
           + '<button onclick="evSelecionarDia('+ev.id+','+d.id+')" style="padding:2px 8px;border-radius:5px;border:1px solid #FFD700;background:rgba(255,215,0,0.08);color:#FFD700;font-size:0.68rem;cursor:pointer;font-family:inherit;">🎯 Sortear</button>'
+          + '<button onclick="evEditarDia('+ev.id+','+d.id+')" style="padding:2px 6px;border-radius:5px;border:1px solid var(--blue);background:transparent;color:var(--blue);font-size:0.68rem;cursor:pointer;font-family:inherit;">✏️</button>'
           + '<button onclick="evDeletarDia('+ev.id+','+d.id+',\''+escH(d.nome)+'\')" style="padding:2px 6px;border-radius:5px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.68rem;cursor:pointer;font-family:inherit;">🗑</button>'
           + '</div></div>';
       }).join('');
@@ -8215,7 +8217,10 @@ function evCriarEvento() {
 
 function evSelecionarEvento(id, nome) {
   _eventoAtual = id;
+  _evEditando  = null;
   document.getElementById('ev-dia-evento-nome').textContent = nome;
+  document.getElementById('ev-form-dia-titulo').textContent = 'Adicionar Dia';
+  document.getElementById('ev-btn-salvar-dia').textContent = 'Adicionar Dia ao Evento';
   document.getElementById('ev-form-dia').style.display = '';
   _evPremios = [];
   evRenderPremios();
@@ -8311,6 +8316,60 @@ function evRenderPremios() {
 function evRemoverPremio(i) {
   _evPremios.splice(i, 1);
   evRenderPremios();
+}
+
+
+function evEditarDia(eid, sid) {
+  fetch('/api/eventos_sorteio/'+eid+'/dias').then(r=>r.json()).then(function(d) {
+    var dias = d.dias || [];
+    var dia = dias.find(function(x){ return x.id===sid; });
+    if (!dia) { alert('Dia não encontrado'); return; }
+    _eventoAtual = eid;
+    _evEditando  = {eid:eid, sid:sid};
+    document.getElementById('ev-dia-evento-nome').textContent = 'Editando: '+dia.nome;
+    document.getElementById('ev-form-dia-titulo').textContent = 'Editar Dia';
+    document.getElementById('ev-btn-salvar-dia').textContent = 'Salvar Alteracoes';
+    document.getElementById('ev-dia-nome').value = dia.nome;
+    document.getElementById('ev-dia-data').value = dia.data || '';
+    document.getElementById('ev-dia-msg').innerHTML = '';
+    _evPremios = (dia.premios||[]).map(function(p){
+      return {nome:p.nome, tipo_batida:p.tipo_batida, cartela_intervalo:p.cartela_intervalo||'', premio_ref_id:p.premio_ref_id||null};
+    });
+    evRenderPremios();
+    document.getElementById('ev-form-dia').style.display = '';
+    document.getElementById('ev-form-dia').scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+}
+
+function evSalvarDia() {
+  if (_evEditando) {
+    var nome = document.getElementById('ev-dia-nome').value.trim();
+    var data = document.getElementById('ev-dia-data').value;
+    var msg  = document.getElementById('ev-dia-msg');
+    if (!nome) { msg.innerHTML='<span style="color:var(--red);">Nome obrigatorio</span>'; return; }
+    if (!_evPremios.length) { msg.innerHTML='<span style="color:var(--red);">Adicione ao menos um premio</span>'; return; }
+    msg.innerHTML='<span style="color:var(--text3);">Salvando...</span>';
+    fetch('/api/eventos_sorteio/'+_evEditando.eid+'/dias/'+_evEditando.sid, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({nome:nome, data:data, premios:_evPremios})
+    }).then(r=>r.json()).then(function(d) {
+      if (d.ok) {
+        msg.innerHTML='<span style="color:var(--green);">Atualizado!</span>';
+        _evEditando = null;
+        _evPremios = [];
+        document.getElementById('ev-dia-nome').value = '';
+        document.getElementById('ev-dia-data').value = '';
+        document.getElementById('ev-form-dia-titulo').textContent = 'Adicionar Dia';
+        document.getElementById('ev-btn-salvar-dia').textContent = 'Adicionar Dia ao Evento';
+        evRenderPremios();
+        evCarregar();
+      } else {
+        msg.innerHTML='<span style="color:var(--red);">'+d.msg+'</span>';
+      }
+    });
+  } else {
+    evCriarDia();
+  }
 }
 
 function evCriarDia() {

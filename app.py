@@ -3161,6 +3161,54 @@ def api_evento_dia_criar(eid):
     log(f"Dia {proximo_dia} adicionado ao evento {eid}", "success")
     return jsonify({"ok": True, "id": sid, "numero_dia": proximo_dia, "msg": f"Dia {proximo_dia} criado!"})
 
+@app.route("/api/eventos_sorteio/<int:eid>/dias/<int:sid>", methods=["PUT"])
+@requer_login
+def api_evento_dia_editar(eid, sid):
+    d = request.get_json() or {}
+    nome    = (d.get("nome") or "").strip()
+    data    = (d.get("data") or "").strip()
+    premios = d.get("premios", [])
+    if not nome:
+        return jsonify({"ok": False, "msg": "Nome do dia é obrigatório"})
+    if not premios:
+        return jsonify({"ok": False, "msg": "Adicione ao menos um prêmio"})
+    with get_db() as conn:
+        sorteio = conn.execute("SELECT * FROM sorteios WHERE id=? AND evento_id=?", (sid, eid)).fetchone()
+        if not sorteio:
+            return jsonify({"ok": False, "msg": "Dia não encontrado"})
+        if sorteio["status"] == "encerrado":
+            return jsonify({"ok": False, "msg": "Sorteio já encerrado, não pode ser editado"})
+        # Verifica se há números sorteados — nesse caso só permite editar nome/data
+        numeros = conn.execute("SELECT COUNT(*) FROM sorteio_numeros WHERE sorteio_id=?", (sid,)).fetchone()[0]
+        conn.execute("UPDATE sorteios SET nome=?, data=? WHERE id=?", (nome, data, sid))
+        if numeros == 0:
+            # Sem sorteio iniciado: recria prêmios
+            conn.execute("DELETE FROM sorteio_premios WHERE sorteio_id=?", (sid,))
+            for i, p in enumerate(premios):
+                foto = p.get("foto_base64") or ""
+                conn.execute(
+                    "INSERT INTO sorteio_premios (sorteio_id, ordem, nome, tipo_batida, status, cartela_intervalo, foto_base64, tem_foto, premio_ref_id) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (sid, i+1, p.get("nome",""), p.get("tipo_batida","cartela_cheia"),
+                     "aguardando", p.get("cartela_intervalo",""), foto, 1 if foto else 0,
+                     p.get("premio_ref_id") or None)
+                )
+        else:
+            # Sorteio iniciado: só atualiza nome/tipo dos prêmios aguardando (não recria)
+            premios_atuais = conn.execute(
+                "SELECT * FROM sorteio_premios WHERE sorteio_id=? ORDER BY ordem", (sid,)
+            ).fetchall()
+            for i, p in enumerate(premios):
+                if i < len(premios_atuais):
+                    pa = premios_atuais[i]
+                    if pa["status"] == "aguardando":
+                        conn.execute(
+                            "UPDATE sorteio_premios SET nome=?, tipo_batida=?, cartela_intervalo=? WHERE id=?",
+                            (p.get("nome",""), p.get("tipo_batida","cartela_cheia"),
+                             p.get("cartela_intervalo",""), pa["id"])
+                        )
+    log(f"Dia {sid} do evento {eid} editado por {session.get('usuario','?')}", "success")
+    return jsonify({"ok": True, "msg": "Dia atualizado!"})
+
 @app.route("/api/eventos_sorteio/<int:eid>/dias/<int:sid>", methods=["DELETE"])
 @requer_login
 def api_evento_dia_deletar(eid, sid):
