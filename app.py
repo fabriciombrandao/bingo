@@ -2774,7 +2774,9 @@ def api_resumo():
     val_pago       = sum(parse_valor(r[0]) for r in rows_pago)
     val_pendente   = sum(parse_valor(r[0]) for r in rows_pend)
     val_disponivel = sum(parse_valor(r[0]) for r in rows_disp)
-    val_total      = sum(parse_valor(r[0]) for r in rows_all)
+    # Potencial total = lotes × valor_lote da config (evita distorcao por valores nulos/errados)
+    _vl = parse_valor(cfg.get("valor_lote", "0"))
+    val_total = (pagos + pendentes + disponiveis) * _vl if _vl > 0 else sum(parse_valor(r[0]) for r in rows_all)
     return jsonify({
         "total":total_lotes, "pagos":pagos, "pendentes":pendentes, "disponiveis":disponiveis,
         "outros":outros, "invalidos":0, "disparar":pendentes, "pct_arrecadado":pct,
