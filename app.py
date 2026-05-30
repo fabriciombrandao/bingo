@@ -2866,9 +2866,17 @@ def api_resumo():
     def parse_valor(v):
         if not v: return 0.0
         try:
-            v = str(v).replace("R$","").replace(".","").replace(",",".").strip()
-            return float(v)
+            s = str(v).replace("R$","").replace(".","").replace(",",".").strip()
+            if not s: return 0.0
+            return float(s)
         except: return 0.0
+    def valor_padrao(v, origem_id):
+        """Retorna valor numerico; se mal formatado, infere pelo tipo do registro."""
+        parsed = parse_valor(v)
+        if parsed > 0:
+            return parsed
+        # Valor ausente/invalido: infere pelo tipo
+        return 20.0 if origem_id else 200.0
     with get_db() as conn:
         # Exclui desmembrados das contagens
         # Lotes normais = sem origem_id e não desmembrado
@@ -2883,21 +2891,19 @@ def api_resumo():
         disponiveis_unit = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='disponivel' AND origem_id IS NOT NULL").fetchone()[0]
         desmembrados= conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='desmembrado'").fetchone()[0]
         outros      = total_lotes - pagos - pendentes - disponiveis
-        # Valor calculado pela regra de negocio: sem origem_id=lote cheio(200), com origem_id=cartela unit(20)
-        rows_pago   = conn.execute("SELECT CASE WHEN origem_id IS NULL THEN 200.0 ELSE 20.0 END FROM contatos WHERE LOWER(status)='pago'").fetchall()
-        rows_pend   = conn.execute("SELECT CASE WHEN origem_id IS NULL THEN 200.0 ELSE 20.0 END FROM contatos WHERE LOWER(status)='pendente'").fetchall()
-        rows_disp   = conn.execute("SELECT CASE WHEN origem_id IS NULL THEN 200.0 ELSE 20.0 END FROM contatos WHERE LOWER(status)='disponivel'").fetchall()
+        rows_pago   = conn.execute("SELECT valor, origem_id FROM contatos WHERE LOWER(status)='pago'").fetchall()
+        rows_pend   = conn.execute("SELECT valor, origem_id FROM contatos WHERE LOWER(status)='pendente'").fetchall()
+        rows_disp   = conn.execute("SELECT valor, origem_id FROM contatos WHERE LOWER(status)='disponivel'").fetchall()
         rows_all    = rows_pago + rows_pend + rows_disp
     cfg = carregar_config()
     cartelas_por_lote = int(cfg.get("cartelas_por_lote", 10) or 10)
     # Total de cartelas = lotes normais * cartelas_por_lote + cartelas unitárias
     total = total_lotes  # para compatibilidade dos cards de lotes
     pct = round(pagos/total*100,1) if total>0 else 0
-    val_pago       = sum(parse_valor(r[0]) for r in rows_pago)
-    val_pendente   = sum(parse_valor(r[0]) for r in rows_pend)
-    val_disponivel = sum(parse_valor(r[0]) for r in rows_disp)
-    # Potencial total pela regra de negocio: lote cheio=R$200, cartela unit=R$20
-    val_total = sum(parse_valor(r[0]) for r in rows_all)
+    val_pago       = sum(valor_padrao(r[0], r[1]) for r in rows_pago)
+    val_pendente   = sum(valor_padrao(r[0], r[1]) for r in rows_pend)
+    val_disponivel = sum(valor_padrao(r[0], r[1]) for r in rows_disp)
+    val_total      = val_pago + val_pendente + val_disponivel
     return jsonify({
         "total":total_lotes, "pagos":pagos, "pendentes":pendentes, "disponiveis":disponiveis,
         "outros":outros, "invalidos":0, "disparar":pendentes, "pct_arrecadado":pct,
