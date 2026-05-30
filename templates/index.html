@@ -1374,7 +1374,14 @@ function tocarSomAlerta() {
     <!-- SECAO ADMIN: GERAR LOTES -->
     <div id="cfg-gerar-lotes" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
       <div style="font-weight:700;font-size:0.92rem;color:#FFD700;margin-bottom:12px;">🎴 Gerar Lotes Adicionais</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Tipo</label>
+          <select id="gl-tipo" onchange="glPreview()" style="width:100%;box-sizing:border-box;padding:8px;border-radius:7px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:0.88rem;">
+            <option value="lote">Lote (10 cartelas — R$200)</option>
+            <option value="unitaria">Unitaria (1 cartela — R$20)</option>
+          </select>
+        </div>
         <div>
           <label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Cartela Inicial</label>
           <input type="number" id="gl-inicio" placeholder="Ex: 15001" min="1"
@@ -1389,8 +1396,12 @@ function tocarSomAlerta() {
         </div>
       </div>
       <div id="gl-preview" style="font-size:0.78rem;color:var(--text3);margin-bottom:10px;min-height:18px;"></div>
-      <button onclick="glGerar()" style="padding:9px 20px;border-radius:8px;border:none;background:#FFD700;color:#0d1b2a;font-size:0.88rem;cursor:pointer;font-family:inherit;font-weight:700;">🎴 Gerar Lotes</button>
-      <span id="gl-msg" style="margin-left:12px;font-size:0.82rem;"></span>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <button onclick="glGerar()" style="padding:9px 20px;border-radius:8px;border:none;background:#FFD700;color:#0d1b2a;font-size:0.88rem;cursor:pointer;font-family:inherit;font-weight:700;">🎴 Gerar</button>
+        <button id="gl-btn-desfazer" onclick="glDesfazer()" style="display:none;padding:9px 16px;border-radius:8px;border:1px solid var(--red);background:transparent;color:var(--red);font-size:0.88rem;cursor:pointer;font-family:inherit;">↩ Desfazer ultima geracao</button>
+        <span id="gl-msg" style="font-size:0.82rem;"></span>
+      </div>
+      <div id="gl-historico" style="margin-top:8px;font-size:0.75rem;color:var(--text3);"></div>
     </div>
 
     <div id="rodape-config" style="display:flex;gap:10px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
@@ -4216,7 +4227,6 @@ function abrirConfiguracoes() {
   if (u.perfil==='admin') {
     fetch('/api/contatos/proximo-lote').then(r=>r.json()).then(function(d) {
       if (d.ok) {
-        // Extrai cartela inicial sugerida do intervalo
         var partes = (d.intervalo||'').split(' a ');
         var ini = parseInt(partes[0]) || '';
         document.getElementById('gl-inicio').value = ini || '';
@@ -4225,6 +4235,7 @@ function abrirConfiguracoes() {
         document.getElementById('gl-msg').textContent = '';
       }
     });
+    glCarregarHistorico();
   }
   document.getElementById('modal-config').classList.add('active');
 }
@@ -4313,38 +4324,78 @@ function corrigirStatusDB() {
 function glPreview() {
   var inicio = parseInt(document.getElementById('gl-inicio').value) || 0;
   var fim    = parseInt(document.getElementById('gl-fim').value) || 0;
+  var tipo   = document.getElementById('gl-tipo').value;
   var el     = document.getElementById('gl-preview');
   if (!inicio || !fim || fim < inicio) { el.textContent = ''; return; }
   var total = fim - inicio + 1;
-  if (total % 10 !== 0) {
-    el.innerHTML = '<span style="color:var(--red);">Intervalo deve ser multiplo de 10 (atual: '+total+' cartelas)</span>';
+  if (tipo === 'lote' && total % 10 !== 0) {
+    el.innerHTML = '<span style="color:var(--red);">Para lotes de 10, o intervalo deve ser multiplo de 10 (atual: '+total+' cartelas)</span>';
     return;
   }
-  var lotes = total / 10;
-  el.innerHTML = '<span style="color:var(--green);">'+lotes+' lotes | '+total+' cartelas | R$ '+
-    (lotes*200).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span>';
+  if (tipo === 'lote') {
+    var lotes = total / 10;
+    el.innerHTML = '<span style="color:var(--green);">'+lotes+' lotes | '+total+' cartelas | R$ '+(lotes*200).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span>';
+  } else {
+    el.innerHTML = '<span style="color:var(--green);">'+total+' cartelas unitarias | R$ '+(total*20).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span>';
+  }
 }
 
 function glGerar() {
   var inicio = parseInt(document.getElementById('gl-inicio').value) || 0;
   var fim    = parseInt(document.getElementById('gl-fim').value) || 0;
+  var tipo   = document.getElementById('gl-tipo').value;
   var msg    = document.getElementById('gl-msg');
   if (!inicio || !fim) { msg.innerHTML='<span style="color:var(--red);">Preencha os campos</span>'; return; }
-  var total  = fim - inicio + 1;
-  if (total % 10 !== 0) { msg.innerHTML='<span style="color:var(--red);">Intervalo deve ser multiplo de 10</span>'; return; }
-  if (!confirm('Gerar '+(total/10)+' lotes (cartelas '+String(inicio).padStart(5,'0')+' a '+String(fim).padStart(5,'0')+')? Esta acao nao pode ser desfeita.')) return;
+  var total = fim - inicio + 1;
+  if (tipo === 'lote' && total % 10 !== 0) { msg.innerHTML='<span style="color:var(--red);">Intervalo deve ser multiplo de 10</span>'; return; }
+  var desc = tipo==='lote' ? (total/10)+' lotes' : total+' cartelas unitarias';
+  if (!confirm('Gerar '+desc+' (cartelas '+String(inicio).padStart(5,'0')+' a '+String(fim).padStart(5,'0')+')?')) return;
   msg.innerHTML='<span style="color:var(--text3);">Gerando...</span>';
   fetch('/api/contatos/gerar-lotes', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({cartela_inicio:inicio, cartela_fim:fim})
+    body: JSON.stringify({cartela_inicio:inicio, cartela_fim:fim, tipo:tipo})
   }).then(r=>r.json()).then(function(d) {
     if (d.ok) {
       msg.innerHTML='<span style="color:var(--green);">'+d.msg+'</span>';
       document.getElementById('gl-inicio').value='';
       document.getElementById('gl-fim').value='';
       document.getElementById('gl-preview').textContent='';
+      glCarregarHistorico();
     } else {
       msg.innerHTML='<span style="color:var(--red);">'+d.msg+'</span>';
+    }
+  });
+}
+
+function glDesfazer() {
+  var msg = document.getElementById('gl-msg');
+  if (!confirm('Desfazer a ultima geracao? Os registros serao removidos permanentemente (apenas se ainda Disponivel).')) return;
+  msg.innerHTML='<span style="color:var(--text3);">Desfazendo...</span>';
+  fetch('/api/contatos/desfazer-geracao', {method:'POST'})
+    .then(r=>r.json()).then(function(d) {
+      msg.innerHTML = d.ok
+        ? '<span style="color:var(--green);">'+d.msg+'</span>'
+        : '<span style="color:var(--red);">'+d.msg+'</span>';
+      if (d.ok) {
+        document.getElementById('gl-btn-desfazer').style.display='none';
+        document.getElementById('gl-historico').textContent='';
+      }
+    });
+}
+
+function glCarregarHistorico() {
+  fetch('/api/contatos/historico-geracao').then(r=>r.json()).then(function(d) {
+    var btn = document.getElementById('gl-btn-desfazer');
+    var hist = document.getElementById('gl-historico');
+    if (d.historico) {
+      var h = d.historico;
+      btn.style.display='';
+      hist.innerHTML = 'Ultima geracao: <b>'+h.registros+'</b> registros | cartelas '+
+        String(h.cartela_inicio).padStart(5,'0')+' a '+String(h.cartela_fim).padStart(5,'0')+
+        ' | tipo: '+h.tipo+' | por '+h.usuario+' em '+h.hora;
+    } else {
+      btn.style.display='none';
+      hist.textContent='';
     }
   });
 }
