@@ -4222,9 +4222,8 @@ function abrirConfiguracoes() {
   carregarConfiguracoes();
   mostrarAba('twilio');
   // Mostra secao gerar lotes apenas para admin
-  var u = JSON.parse(localStorage.getItem('bingo_usuario')||'{}');
-  document.getElementById('cfg-gerar-lotes').style.display = (u.perfil==='admin') ? '' : 'none';
-  if (u.perfil==='admin') {
+  document.getElementById('cfg-gerar-lotes').style.display = (_meuPerfil==='admin') ? '' : 'none';
+  if (_meuPerfil==='admin') {
     fetch('/api/contatos/proximo-lote').then(r=>r.json()).then(function(d) {
       if (d.ok) {
         var partes = (d.intervalo||'').split(' a ');
