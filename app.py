@@ -33,6 +33,7 @@ USUARIOS_PATH = os.path.join(APP_DIR, "usuarios.json")
 PASTA_RELAT   = os.path.join(APP_DIR, "relatorios")
 PASTA_QRCODES = os.path.join(APP_DIR, "static", "qrcodes")
 LOG_PATH      = os.path.join(APP_DIR, "log_atividades.json")
+BACKUP_DIR    = os.path.join(APP_DIR, "backups")
 # ─────────────────────────────────────────────
 
 app = Flask(__name__)
@@ -61,6 +62,15 @@ _db_lock    = threading.RLock()  # RLock permite reentrada na mesma thread
 from contextlib import contextmanager
 
 @contextmanager
+def fazer_backup_db(prefixo="backup"):
+    """Copia o banco para a pasta backups com timestamp. Retorna o caminho do backup."""
+    import shutil
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    dest = os.path.join(BACKUP_DIR, f"bingo_{prefixo}_{ts}.db")
+    shutil.copy2(DB_PATH, dest)
+    return dest
+
 def get_db():
     acquired = _db_lock.acquire(timeout=20)
     if not acquired:
@@ -1514,6 +1524,13 @@ def api_gerar_lotes():
     except:
         return jsonify({"ok": False, "msg": "Valores invalidos"})
     tipo = d.get("tipo", "lote")  # "lote" ou "unitaria"
+    # Backup automático antes de gerar
+    try:
+        backup_path = fazer_backup_db("pre_geracao")
+        log(f"Backup criado antes da geracao: {os.path.basename(backup_path)}", "info")
+    except Exception as e:
+        log(f"Aviso: nao foi possivel criar backup antes da geracao: {e}", "warning")
+        backup_path = None
     if cartela_inicio <= 0 or cartela_fim <= 0:
         return jsonify({"ok": False, "msg": "Informe o intervalo de cartelas"})
     if cartela_fim < cartela_inicio:
@@ -1574,7 +1591,8 @@ def api_gerar_lotes():
     label = "cartelas unitarias" if tipo == "unitaria" else "lotes"
     log(f"Gerados {registros_criados} {label} (cartelas {cartela_inicio:05d} a {cartela_fim:05d}) por {session.get('usuario','?')}", "success")
     auditar("GERAR_LOTES", detalhes=f"Cartelas {cartela_inicio:05d} a {cartela_fim:05d} | {registros_criados} {label} | tipo={tipo}")
-    return jsonify({"ok": True, "msg": f"{registros_criados} {label} gerados com sucesso!", "registros": registros_criados, "cartelas": total_cartelas, "ids": ids_gerados})
+    backup_nome = os.path.basename(backup_path) if backup_path else None
+    return jsonify({"ok": True, "msg": f"{registros_criados} {label} gerados com sucesso!", "registros": registros_criados, "cartelas": total_cartelas, "ids": ids_gerados, "backup": backup_nome})
 
 @app.route("/api/contatos/desfazer-geracao", methods=["POST"])
 @requer_login

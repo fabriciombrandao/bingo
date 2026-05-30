@@ -4355,7 +4355,8 @@ function glGerar() {
     body: JSON.stringify({cartela_inicio:inicio, cartela_fim:fim, tipo:tipo})
   }).then(r=>r.json()).then(function(d) {
     if (d.ok) {
-      msg.innerHTML='<span style="color:var(--green);">'+d.msg+'</span>';
+      var backupInfo = d.backup ? ' <span style="color:var(--text3);font-size:0.75rem;">| backup: '+d.backup+'</span>' : '';
+      msg.innerHTML='<span style="color:var(--green);">'+d.msg+'</span>'+backupInfo;
       document.getElementById('gl-inicio').value='';
       document.getElementById('gl-fim').value='';
       document.getElementById('gl-preview').textContent='';
