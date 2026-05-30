@@ -61,7 +61,6 @@ _db_lock    = threading.RLock()  # RLock permite reentrada na mesma thread
 
 from contextlib import contextmanager
 
-@contextmanager
 def fazer_backup_db(prefixo="backup"):
     """Copia o banco para a pasta backups com timestamp. Retorna o caminho do backup."""
     import shutil
@@ -71,6 +70,7 @@ def fazer_backup_db(prefixo="backup"):
     shutil.copy2(DB_PATH, dest)
     return dest
 
+@contextmanager
 def get_db():
     acquired = _db_lock.acquire(timeout=20)
     if not acquired:
