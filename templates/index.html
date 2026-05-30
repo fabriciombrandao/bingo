@@ -1370,6 +1370,29 @@ function tocarSomAlerta() {
       <div id="rapidas-lista"></div>
     </div>
 
+
+    <!-- SECAO ADMIN: GERAR LOTES -->
+    <div id="cfg-gerar-lotes" style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+      <div style="font-weight:700;font-size:0.92rem;color:#FFD700;margin-bottom:12px;">🎴 Gerar Lotes Adicionais</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Cartela Inicial</label>
+          <input type="number" id="gl-inicio" placeholder="Ex: 15001" min="1"
+            style="width:100%;box-sizing:border-box;padding:8px;border-radius:7px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:0.88rem;"
+            oninput="glPreview()">
+        </div>
+        <div>
+          <label style="font-size:0.72rem;color:var(--text3);display:block;margin-bottom:3px;">Cartela Final</label>
+          <input type="number" id="gl-fim" placeholder="Ex: 15500" min="1"
+            style="width:100%;box-sizing:border-box;padding:8px;border-radius:7px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:0.88rem;"
+            oninput="glPreview()">
+        </div>
+      </div>
+      <div id="gl-preview" style="font-size:0.78rem;color:var(--text3);margin-bottom:10px;min-height:18px;"></div>
+      <button onclick="glGerar()" style="padding:9px 20px;border-radius:8px;border:none;background:#FFD700;color:#0d1b2a;font-size:0.88rem;cursor:pointer;font-family:inherit;font-weight:700;">🎴 Gerar Lotes</button>
+      <span id="gl-msg" style="margin-left:12px;font-size:0.82rem;"></span>
+    </div>
+
     <div id="rodape-config" style="display:flex;gap:10px;margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
       <button class="btn btn-gray" onclick="fecharModal('modal-config')" style="width:auto;padding:9px 16px;">Cancelar</button>
       <button class="btn btn-green" onclick="salvarConfiguracoes()" style="width:auto;padding:9px 20px;flex:1;">Salvar Configuracoes</button>
@@ -4187,6 +4210,22 @@ function rapidaSelecionar(el) {
 function abrirConfiguracoes() {
   carregarConfiguracoes();
   mostrarAba('twilio');
+  // Mostra secao gerar lotes apenas para admin
+  var u = JSON.parse(localStorage.getItem('bingo_usuario')||'{}');
+  document.getElementById('cfg-gerar-lotes').style.display = (u.perfil==='admin') ? '' : 'none';
+  if (u.perfil==='admin') {
+    fetch('/api/contatos/proximo-lote').then(r=>r.json()).then(function(d) {
+      if (d.ok) {
+        // Extrai cartela inicial sugerida do intervalo
+        var partes = (d.intervalo||'').split(' a ');
+        var ini = parseInt(partes[0]) || '';
+        document.getElementById('gl-inicio').value = ini || '';
+        document.getElementById('gl-fim').value = '';
+        document.getElementById('gl-preview').textContent = '';
+        document.getElementById('gl-msg').textContent = '';
+      }
+    });
+  }
   document.getElementById('modal-config').classList.add('active');
 }
 
@@ -4268,6 +4307,46 @@ function corrigirStatusDB() {
         res.innerHTML = '<span style="color:var(--red);">Erro ao corrigir</span>';
       }
     });
+}
+
+
+function glPreview() {
+  var inicio = parseInt(document.getElementById('gl-inicio').value) || 0;
+  var fim    = parseInt(document.getElementById('gl-fim').value) || 0;
+  var el     = document.getElementById('gl-preview');
+  if (!inicio || !fim || fim < inicio) { el.textContent = ''; return; }
+  var total = fim - inicio + 1;
+  if (total % 10 !== 0) {
+    el.innerHTML = '<span style="color:var(--red);">Intervalo deve ser multiplo de 10 (atual: '+total+' cartelas)</span>';
+    return;
+  }
+  var lotes = total / 10;
+  el.innerHTML = '<span style="color:var(--green);">'+lotes+' lotes | '+total+' cartelas | R$ '+
+    (lotes*200).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</span>';
+}
+
+function glGerar() {
+  var inicio = parseInt(document.getElementById('gl-inicio').value) || 0;
+  var fim    = parseInt(document.getElementById('gl-fim').value) || 0;
+  var msg    = document.getElementById('gl-msg');
+  if (!inicio || !fim) { msg.innerHTML='<span style="color:var(--red);">Preencha os campos</span>'; return; }
+  var total  = fim - inicio + 1;
+  if (total % 10 !== 0) { msg.innerHTML='<span style="color:var(--red);">Intervalo deve ser multiplo de 10</span>'; return; }
+  if (!confirm('Gerar '+(total/10)+' lotes (cartelas '+String(inicio).padStart(5,'0')+' a '+String(fim).padStart(5,'0')+')? Esta acao nao pode ser desfeita.')) return;
+  msg.innerHTML='<span style="color:var(--text3);">Gerando...</span>';
+  fetch('/api/contatos/gerar-lotes', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({cartela_inicio:inicio, cartela_fim:fim})
+  }).then(r=>r.json()).then(function(d) {
+    if (d.ok) {
+      msg.innerHTML='<span style="color:var(--green);">'+d.msg+'</span>';
+      document.getElementById('gl-inicio').value='';
+      document.getElementById('gl-fim').value='';
+      document.getElementById('gl-preview').textContent='';
+    } else {
+      msg.innerHTML='<span style="color:var(--red);">'+d.msg+'</span>';
+    }
+  });
 }
 
 function salvarConfiguracoes() {

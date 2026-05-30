@@ -1501,6 +1501,62 @@ def api_lotes():
         rows=conn.execute("SELECT DISTINCT lote FROM contatos WHERE lote!='' ORDER BY CAST(lote AS INTEGER)").fetchall()
     return jsonify({"ok":True,"lotes":[r[0] for r in rows]})
 
+
+@app.route("/api/contatos/gerar-lotes", methods=["POST"])
+@requer_login
+def api_gerar_lotes():
+    if session.get("perfil") != "admin":
+        return jsonify({"ok": False, "msg": "Acesso restrito ao admin"})
+    d = request.get_json() or {}
+    try:
+        cartela_inicio = int(d.get("cartela_inicio", 0))
+        cartela_fim    = int(d.get("cartela_fim", 0))
+    except:
+        return jsonify({"ok": False, "msg": "Valores inválidos"})
+    if cartela_inicio <= 0 or cartela_fim <= 0:
+        return jsonify({"ok": False, "msg": "Informe o intervalo de cartelas"})
+    if cartela_fim < cartela_inicio:
+        return jsonify({"ok": False, "msg": "Cartela final deve ser maior que a inicial"})
+    total_cartelas = cartela_fim - cartela_inicio + 1
+    if total_cartelas % 10 != 0:
+        return jsonify({"ok": False, "msg": f"O intervalo deve ser múltiplo de 10. Total: {total_cartelas} cartelas"})
+    with get_db() as conn:
+        # Verificar se já existe alguma cartela nesse range
+        rows = conn.execute("SELECT intervalo FROM contatos WHERE intervalo!=''").fetchall()
+        cartelas_existentes = set()
+        for r in rows:
+            iv = (r[0] or "").strip()
+            partes = iv.replace(" a ", " ").replace(" A ", " ").split()
+            nums = []
+            for p in partes:
+                try: nums.append(int(p.strip()))
+                except: pass
+            if len(nums) == 2:
+                for n in range(nums[0], nums[1]+1):
+                    cartelas_existentes.add(n)
+        conflito = [n for n in range(cartela_inicio, cartela_fim+1) if n in cartelas_existentes]
+        if conflito:
+            return jsonify({"ok": False, "msg": f"Conflito: cartelas {conflito[0]}–{conflito[-1]} já existem no sistema"})
+        # Próximo número de lote
+        row = conn.execute("SELECT MAX(CAST(lote AS INTEGER)) FROM contatos WHERE lote!=''").fetchone()
+        proximo_lote = (row[0] or 0) + 1
+        now = datetime.now().strftime("%d/%m/%Y %H:%M")
+        lotes_criados = 0
+        c = cartela_inicio
+        while c <= cartela_fim:
+            fim_lote = c + 9
+            intervalo = f"{c:05d} a {fim_lote:05d}"
+            conn.execute(
+                "INSERT INTO contatos (lote, intervalo, vendedor, nome, telefone, whatsapp, valor, status, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (str(proximo_lote), intervalo, "", "", "", "", "R$ 200,00", "Disponivel", now, now)
+            )
+            proximo_lote += 1
+            lotes_criados += 1
+            c += 10
+    log(f"Gerados {lotes_criados} lotes (cartelas {cartela_inicio:05d} a {cartela_fim:05d}) por {session.get('usuario','?')}", "success")
+    auditar("GERAR_LOTES", detalhes=f"Cartelas {cartela_inicio:05d} a {cartela_fim:05d} | {lotes_criados} lotes gerados")
+    return jsonify({"ok": True, "msg": f"{lotes_criados} lotes gerados com sucesso!", "lotes": lotes_criados, "cartelas": total_cartelas})
+
 @app.route("/api/contatos/proximo-lote")
 @requer_login
 def api_proximo_lote():
