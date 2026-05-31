@@ -1812,6 +1812,7 @@ function abrirConversa(numero, contatoId) {
       convWrap.style.cssText = 'background:#e5ddd5;padding:12px;border-radius:10px;display:flex;flex-direction:column;gap:8px;';
       msgs.forEach(function(m){
         var isSistema = m.de === 'sistema';
+        var isDisparo = m.tipo === 'disparo';
         var midias = (m.midias || []).map(function(mi){
           var proxySrc = '/api/inbox/midia?url=' + encodeURIComponent(mi.url);
           if (mi.tipo && mi.tipo.startsWith('image/')) {
@@ -1829,10 +1830,10 @@ function abrirConversa(numero, contatoId) {
         }).join('');
         var wrap = document.createElement('div');
         wrap.style.cssText = 'display:flex;' + (isSistema ? 'justify-content:flex-end' : 'justify-content:flex-start') + ';';
-        var cor    = isSistema ? '#dcf8c6' : '#fff';
+        var cor    = isDisparo ? '#fef9c3' : isSistema ? '#dcf8c6' : '#fff';
         var radius = isSistema ? '10px 0 10px 10px' : '0 10px 10px 10px';
-        var labelCor = isSistema ? '#16a34a' : '#1d4ed8';
-        var label  = isSistema ? 'Sistema' : 'Cliente';
+        var labelCor = isDisparo ? '#92400e' : isSistema ? '#16a34a' : '#1d4ed8';
+        var label  = isDisparo ? '📤 Disparo automático' : isSistema ? 'Sistema' : 'Cliente';
         wrap.innerHTML =
           '<div style="background:'+cor+';border-radius:'+radius+';padding:10px 14px;max-width:80%;box-shadow:0 1px 2px rgba(0,0,0,0.08);">' +
             '<div style="font-size:0.68rem;font-weight:700;color:'+labelCor+';margin-bottom:3px;">'+label+'</div>' +

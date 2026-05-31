@@ -343,6 +343,12 @@ def init_db():
         except Exception as em:
             log(f'Migração UNIQUE cpf: {em}', 'warning')
 
+        # Adicionar coluna sid em log_envios (guarda SID Twilio separado do texto)
+        try:
+            conn.execute("ALTER TABLE log_envios ADD COLUMN sid TEXT")
+            log('Migração log_envios: coluna sid adicionada', 'success')
+        except: pass  # já existe
+
         # Migrar log_envios: converter criado_em de dd/mm/YYYY para YYYY-MM-DD
         try:
             rows = conn.execute("SELECT id, criado_em FROM log_envios WHERE criado_em LIKE '__/__/____%%'").fetchall()
@@ -998,13 +1004,14 @@ def executar_envio_thread(ids=None, limite=0, modo_teste=False, data_base=None, 
             # Envio real
             try:
                 now = datetime.now().strftime("%d/%m/%Y %H:%M")
+                texto_msg = montar_mensagem(c, cfg)
                 ok, sid_ou_erro = _enviar_twilio(twilio_client, cfg.get("twilio_numero",""), c, cfg)
                 if ok:
                     with get_db() as conn:
                         conn.execute("UPDATE contatos SET ultimo_wa=?,atualizado_em=? WHERE id=?", (now,now,c["id"]))
                         conn.execute(
-                            "INSERT INTO log_envios (contato_id,nome,telefone,status,mensagem,criado_em) VALUES (?,?,?,?,?,?)",
-                            (c["id"],c["nome"],c.get("telefone",""),"ENVIADO",sid_ou_erro,now)
+                            "INSERT INTO log_envios (contato_id,nome,telefone,status,mensagem,sid,criado_em) VALUES (?,?,?,?,?,?,?)",
+                            (c["id"],c["nome"],c.get("telefone",""),"ENVIADO",texto_msg,sid_ou_erro,now)
                         )
                     log(f"✅ Enviado: {c['nome']} | SID: {sid_ou_erro}","success")
                     resultados.append({"nome":c["nome"],"lote":c.get("lote",""),"intervalo":c.get("intervalo",""),"telefone":c.get("telefone",""),"status":"ENVIADO","sid":sid_ou_erro,"hora":now})
@@ -1014,8 +1021,8 @@ def executar_envio_thread(ids=None, limite=0, modo_teste=False, data_base=None, 
                 else:
                     with get_db() as conn:
                         conn.execute(
-                            "INSERT INTO log_envios (contato_id,nome,telefone,status,mensagem,criado_em) VALUES (?,?,?,?,?,?)",
-                            (c["id"],c["nome"],c.get("telefone",""),"ERRO",sid_ou_erro,now)
+                            "INSERT INTO log_envios (contato_id,nome,telefone,status,mensagem,sid,criado_em) VALUES (?,?,?,?,?,?,?)",
+                            (c["id"],c["nome"],c.get("telefone",""),"ERRO",texto_msg,sid_ou_erro,now)
                         )
                     log(f"❌ Erro {c['nome']}: {sid_ou_erro}","error")
                     resultados.append({"nome":c["nome"],"lote":c.get("lote",""),"intervalo":c.get("intervalo",""),"telefone":c.get("telefone",""),"status":"ERRO","erro":sid_ou_erro,"hora":now})
@@ -2032,21 +2039,22 @@ def api_grid_enviar_cobranca():
             log(f"⏭ {c['nome']} já recebeu mensagem hoje — ignorado.","warning")
             continue
         try:
+            texto_msg = montar_mensagem(c, cfg)
             ok, sid_ou_erro = _enviar_twilio(client, num, c, cfg)
             # Cada update do banco é uma operação curta e independente
             with get_db() as conn:
                 if ok:
                     conn.execute("UPDATE contatos SET ultimo_wa=?,atualizado_em=? WHERE id=?", (now,now,c["id"]))
                     conn.execute(
-                        "INSERT INTO log_envios (contato_id,nome,telefone,status,mensagem,criado_em) VALUES (?,?,?,?,?,?)",
-                        (c["id"],c["nome"],c.get("telefone",""),"ENVIADO",sid_ou_erro,now)
+                        "INSERT INTO log_envios (contato_id,nome,telefone,status,mensagem,sid,criado_em) VALUES (?,?,?,?,?,?,?)",
+                        (c["id"],c["nome"],c.get("telefone",""),"ENVIADO",texto_msg,sid_ou_erro,now)
                     )
                     log(f"✅ Cobrança enviada: {c['nome']} | SID: {sid_ou_erro}","success")
                     enviados += 1
                 else:
                     conn.execute(
-                        "INSERT INTO log_envios (contato_id,nome,telefone,status,mensagem,criado_em) VALUES (?,?,?,?,?,?)",
-                        (c["id"],c["nome"],c.get("telefone",""),"ERRO",sid_ou_erro,now)
+                        "INSERT INTO log_envios (contato_id,nome,telefone,status,mensagem,sid,criado_em) VALUES (?,?,?,?,?,?,?)",
+                        (c["id"],c["nome"],c.get("telefone",""),"ERRO",texto_msg,sid_ou_erro,now)
                     )
                     log(f"❌ Erro cobrança {c['nome']}: {sid_ou_erro}","error")
                     erros += 1
@@ -2380,6 +2388,30 @@ def api_inbox_conversa(numero):
                 dados["nome"]=r["nome"]; dados["contato_id"]=r["id"]
                 dados["linha_sheet"]=r["id"]; dados["status"]=r["status"]
                 dados["outros_lotes"] = []
+                # Buscar histórico de disparos do log_envios
+                tel_fmt = r.get("telefone","") or r.get("whatsapp","")
+                logs = conn.execute(
+                    "SELECT criado_em, status, mensagem, sid FROM log_envios WHERE contato_id=? ORDER BY criado_em",
+                    (r["id"],)
+                ).fetchall()
+                msgs_log = []
+                for l in logs:
+                    texto = l["mensagem"] or ""
+                    # Se mensagem parece SID Twilio (MM + 32 hex), usa placeholder
+                    if texto.startswith("MM") and len(texto) == 34:
+                        texto = "[Mensagem de cobrança enviada]"
+                    msgs_log.append({
+                        "de": "sistema",
+                        "texto": texto,
+                        "midias": [],
+                        "hora": l["criado_em"],
+                        "lida": True,
+                        "tipo": "disparo"
+                    })
+                # Intercalar log_envios com msgs do inbox por horário
+                todas = list(dados.get("msgs", [])) + msgs_log
+                todas.sort(key=lambda m: m.get("hora",""))
+                dados["msgs"] = todas
     except: pass
     for m in inbox.get(chave_inbox,{}).get("msgs",[]): m["lida"]=True
     if chave_inbox in inbox: salvar_inbox(inbox)
