@@ -1721,6 +1721,10 @@ function atualizarInbox() {
         if (inboxTotalAnterior > 0) renderGrid();
       }
       inboxTotalAnterior = total;
+      // Re-renderiza modal de manutenção se estiver aberto (atualiza balões 💬)
+      if (document.getElementById('modal-manutencao-lotes').style.display !== 'none' && typeof mlFiltrar === 'function') {
+        mlFiltrar();
+      }
     });
 }
 
@@ -7026,7 +7030,13 @@ var mlOrdemAsc = true;
 
 function abrirManutencaoLotes() {
   document.getElementById('modal-manutencao-lotes').style.display = 'flex';
-  mlCarregar();
+  // Garante inbox atualizado antes de renderizar balões 💬
+  fetch('/api/inbox/resumo')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.ok) { inboxResumo = d.resumo || {}; inboxHistorico = d.historico || {}; }
+    })
+    .finally(function(){ mlCarregar(); });
 }
 
 
