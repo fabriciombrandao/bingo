@@ -2936,6 +2936,8 @@ function relatCarregarDisparos() {
       grupos.forEach(function(g){
         (g.itens || []).forEach(function(item){ _dispDados.push(item); });
       });
+      // Garante ordem DESC por id (mais recente primeiro)
+      _dispDados.sort(function(a,b){ return (b.id||0) - (a.id||0); });
       dispFiltrar();
     })
     .catch(function(){
@@ -3019,13 +3021,13 @@ function dispFiltrarAplicar() {
 
   var html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.78rem;">' +
     '<thead><tr style="background:var(--bg3);">' +
-    th('Data/Hora') + th('Status') + th('Nome') + th('Lote') + th('Cartelas') + th('Telefone') + th('Info') +
+    th('Data/Hora') + th('Status') + th('Nome') + th('Lote') + th('Cartelas') + th('Telefone') + th('Mensagem') +
     '</tr></thead><tbody>' +
     pagina.map(function(r, i){
       var cor   = STATUS_COR[r.status] || '#64748b';
       var badge = '<span style="background:'+cor+'22;color:'+cor+';border-radius:99px;padding:2px 8px;font-size:0.7rem;font-weight:700;">'+r.status+'</span>';
       var info  = r.status === 'ENVIADO'
-        ? '<span style="color:var(--text3);font-size:0.7rem;" title="'+(r.mensagem||'')+'">SID: '+(r.mensagem||'').slice(-8)+'</span>'
+        ? (function(){ var sid=r.sid||''; var txt=r.mensagem||''; var isSid=txt.startsWith('MM')&&txt.length===34; return '<span title="SID: '+sid+'" style="font-size:0.78rem;color:var(--text);">'+(isSid?'[Mensagem de cobrança]':txt||'—')+'</span>'; })()
         : '<span style="color:#ef4444;font-size:0.7rem;">'+(r.mensagem||'')+'</span>';
       return '<tr style="border-bottom:1px solid var(--border);background:'+(i%2===0?'var(--bg2)':'var(--bg3)')+';">' +
         '<td style="padding:7px 12px;color:var(--text3);white-space:nowrap;font-size:0.75rem;">'+(r.criado_em||'—')+'</td>' +
