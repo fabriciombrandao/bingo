@@ -2419,7 +2419,16 @@ def api_inbox_conversa(numero):
                     })
                 # Intercalar log_envios com msgs do inbox por horário
                 todas = list(dados.get("msgs", [])) + msgs_log
-                todas.sort(key=lambda m: m.get("hora",""))
+                # Ordena por data convertendo DD/MM/YYYY HH:MM para chave comparável
+                def _hora_key(m):
+                    h = m.get("hora","")
+                    try:
+                        from datetime import datetime
+                        return datetime.strptime(h, "%d/%m/%Y %H:%M:%S")
+                    except:
+                        try: return datetime.strptime(h, "%d/%m/%Y %H:%M")
+                        except: return h
+                todas.sort(key=_hora_key)
                 dados["msgs"] = todas
     except: pass
     for m in inbox.get(chave_inbox,{}).get("msgs",[]): m["lida"]=True
