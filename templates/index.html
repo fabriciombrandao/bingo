@@ -2165,7 +2165,7 @@ function gridAcaoUnico(linha, tipo) {
         ? '⚠️ Este contato já recebeu uma mensagem hoje!\n\nDeseja enviar novamente mesmo assim?'
         : 'Enviar cobrança para este contato?';
       if (!confirm(msg)) return;
-      gridChamarAPI('/api/grid/enviar-cobranca', {linhas: [linha]});
+      gridChamarAPI('/api/grid/enviar-cobranca', {linhas: [linha], forcar: jaEnviado});
     })
     .catch(function(){
       if (!confirm('Enviar cobrança para este contato?')) return;
@@ -7573,7 +7573,7 @@ function mlAcaoUnico(linha, tipo) {
         ? '⚠️ Este contato já recebeu uma mensagem hoje!\n\nDeseja enviar novamente mesmo assim?'
         : 'Enviar cobrança para este contato?';
       if (!confirm(msg)) return;
-      mlChamarAPI('/api/grid/enviar-cobranca', {linhas: [linha]});
+      mlChamarAPI('/api/grid/enviar-cobranca', {linhas: [linha], forcar: jaEnviado});
     })
     .catch(function(){
       // Se falhar a checagem, pergunta normalmente

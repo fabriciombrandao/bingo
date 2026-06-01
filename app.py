@@ -2012,7 +2012,7 @@ def api_check_enviado_hoje():
 @app.route("/api/grid/enviar-cobranca", methods=["POST"])
 @requer_login
 def api_grid_enviar_cobranca():
-    d = request.get_json() or {}; linhas = d.get("linhas",[]); cfg = carregar_config()
+    d = request.get_json() or {}; linhas = d.get("linhas",[]); cfg = carregar_config(); forcar = bool(d.get("forcar", False))
     if not linhas: return jsonify({"ok":False,"msg":"Nenhuma linha selecionada!"})
     sid   = cfg.get("twilio_sid",""); token = cfg.get("twilio_token",""); num = cfg.get("twilio_numero","")
     if not all([sid,token,num]): return jsonify({"ok":False,"msg":"Twilio não configurado!"})
@@ -2035,7 +2035,7 @@ def api_grid_enviar_cobranca():
     enviados = erros = 0
 
     for c in contatos:
-        if c.get("id") in ja_hoje:
+        if not forcar and c.get("id") in ja_hoje:
             log(f"⏭ {c['nome']} já recebeu mensagem hoje — ignorado.","warning")
             continue
         try:
