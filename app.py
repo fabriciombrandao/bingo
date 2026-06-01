@@ -2315,6 +2315,15 @@ def api_inbox_resumo():
         if msgs: historico[numero]=len(msgs)
         nao_lidas=sum(1 for m in msgs if not m.get("lida",False))
         if nao_lidas>0: resumo[numero]=nao_lidas; total+=nao_lidas
+    # Inclui no historico contatos que receberam disparos (log_envios)
+    try:
+        with get_db() as conn:
+            rows=conn.execute("SELECT DISTINCT telefone FROM log_envios WHERE status='ENVIADO'").fetchall()
+        for r in rows:
+            tel=numero_limpo(r["telefone"] or "")
+            if tel and tel not in historico:
+                historico[tel]=-1  # tem histórico mas só disparos, sem resposta
+    except: pass
     return jsonify({"ok":True,"resumo":resumo,"historico":historico,"total":total})
 
 @app.route("/api/inbox/relatorio")
