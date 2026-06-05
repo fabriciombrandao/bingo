@@ -2938,30 +2938,29 @@ def api_resumo():
             if not s: return 0.0
             return float(s)
         except: return 0.0
-    def valor_padrao(v, origem_id):
+    def valor_padrao(v, intervalo):
         """Retorna valor numerico; se mal formatado, infere pelo tipo do registro."""
         parsed = parse_valor(v)
         if parsed > 0:
             return parsed
-        # Valor ausente/invalido: infere pelo tipo
-        return 20.0 if origem_id else 200.0
+        # Valor ausente/invalido: infere pelo intervalo (lote real tem " a ", unitaria nao)
+        return 200.0 if " a " in (intervalo or "") else 20.0
     with get_db() as conn:
-        # Exclui desmembrados das contagens
-        # Lotes normais = sem origem_id e não desmembrado
-        # Cartelas unitárias = com origem_id (desmembradas)
-        total_lotes    = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status) != 'desmembrado' AND origem_id IS NULL").fetchone()[0]
-        total_cartelas_unit = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status) != 'desmembrado' AND origem_id IS NOT NULL").fetchone()[0]
-        pagos       = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='pago' AND origem_id IS NULL").fetchone()[0]
-        pagos_unit  = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='pago' AND origem_id IS NOT NULL").fetchone()[0]
-        pendentes   = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='pendente' AND origem_id IS NULL").fetchone()[0]
-        pendentes_unit = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='pendente' AND origem_id IS NOT NULL").fetchone()[0]
-        disponiveis = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='disponivel' AND origem_id IS NULL").fetchone()[0]
-        disponiveis_unit = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='disponivel' AND origem_id IS NOT NULL").fetchone()[0]
+        # Lotes reais = intervalo contém " a " (ex: "00001 a 00010")
+        # Cartelas unitárias = intervalo sem " a " (geradas via tipo=unitaria ou desmembradas)
+        total_lotes    = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status) != 'desmembrado' AND intervalo LIKE '% a %'").fetchone()[0]
+        total_cartelas_unit = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status) != 'desmembrado' AND intervalo NOT LIKE '% a %'").fetchone()[0]
+        pagos       = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='pago' AND intervalo LIKE '% a %'").fetchone()[0]
+        pagos_unit  = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='pago' AND intervalo NOT LIKE '% a %'").fetchone()[0]
+        pendentes   = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='pendente' AND intervalo LIKE '% a %'").fetchone()[0]
+        pendentes_unit = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='pendente' AND intervalo NOT LIKE '% a %'").fetchone()[0]
+        disponiveis = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='disponivel' AND intervalo LIKE '% a %'").fetchone()[0]
+        disponiveis_unit = conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='disponivel' AND intervalo NOT LIKE '% a %'").fetchone()[0]
         desmembrados= conn.execute("SELECT COUNT(*) FROM contatos WHERE LOWER(status)='desmembrado'").fetchone()[0]
         outros      = total_lotes - pagos - pendentes - disponiveis
-        rows_pago   = conn.execute("SELECT valor, origem_id FROM contatos WHERE LOWER(status)='pago'").fetchall()
-        rows_pend   = conn.execute("SELECT valor, origem_id FROM contatos WHERE LOWER(status)='pendente'").fetchall()
-        rows_disp   = conn.execute("SELECT valor, origem_id FROM contatos WHERE LOWER(status)='disponivel'").fetchall()
+        rows_pago   = conn.execute("SELECT valor, intervalo FROM contatos WHERE LOWER(status)='pago'").fetchall()
+        rows_pend   = conn.execute("SELECT valor, intervalo FROM contatos WHERE LOWER(status)='pendente'").fetchall()
+        rows_disp   = conn.execute("SELECT valor, intervalo FROM contatos WHERE LOWER(status)='disponivel'").fetchall()
         rows_all    = rows_pago + rows_pend + rows_disp
     cfg = carregar_config()
     cartelas_por_lote = int(cfg.get("cartelas_por_lote", 10) or 10)
