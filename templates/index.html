@@ -1330,6 +1330,27 @@ function tocarSomAlerta() {
       </div>
     </div>
 
+    <div class="cfg-bloco" style="margin-top:14px;">
+      <div style="font-weight:600;font-size:0.8rem;margin-bottom:10px;color:var(--accent);">💰 Valores das Cartelas / Rifas</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div>
+          <label>Valor Unitário</label>
+          <input type="text" id="cfg-valor-unitario" placeholder="R$ 20,00">
+        </div>
+        <div>
+          <label>Cartelas por Lote</label>
+          <input type="number" id="cfg-cartelas-por-lote" min="1" placeholder="10">
+        </div>
+        <div>
+          <label>Valor do Lote</label>
+          <input type="text" id="cfg-valor-lote" placeholder="Calculado automaticamente">
+        </div>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:6px;">
+        💡 Se <b>Valor do Lote</b> ficar vazio, é calculado automaticamente como <b>Valor Unitário × Cartelas por Lote</b>.
+      </div>
+    </div>
+
 
     <div id="aba-senha" style="display:none;">
       <div style="font-size:0.75rem;color:var(--text3);margin-bottom:14px;">Altere a senha de acesso as configuracoes.</div>
@@ -4292,6 +4313,9 @@ function carregarConfiguracoes() {
       document.getElementById('cfg-intervalo-max').value     = d.intervalo_max || 45;
       document.getElementById('cfg-limite-sessao').value     = d.limite_sessao || 0;
       document.getElementById('cfg-dias-disparo').value      = d.dias_disparo  || 0;
+      document.getElementById('cfg-valor-unitario').value    = d.valor_unitario || 'R$ 20,00';
+      document.getElementById('cfg-cartelas-por-lote').value = d.cartelas_por_lote || 10;
+      document.getElementById('cfg-valor-lote').value        = d.valor_lote || '';
       document.getElementById('cfg-session-timeout').value   = d.session_timeout_horas || 8;
     });
 }
@@ -4429,6 +4453,9 @@ function salvarConfiguracoes() {
     content_template_sid:     document.getElementById('cfg-content-template-sid').value.trim(),
     limite_sessao:            parseInt(document.getElementById('cfg-limite-sessao').value) || 0,
     dias_disparo:             parseInt(document.getElementById('cfg-dias-disparo').value)  || 0,
+    valor_unitario:           document.getElementById('cfg-valor-unitario').value.trim(),
+    cartelas_por_lote:        parseInt(document.getElementById('cfg-cartelas-por-lote').value) || 10,
+    valor_lote:               document.getElementById('cfg-valor-lote').value.trim(),
     session_timeout_horas:    parseInt(document.getElementById('cfg-session-timeout').value) || 8,
   };
   fetch('/api/config/salvar', {
