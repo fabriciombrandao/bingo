@@ -1567,13 +1567,26 @@ def api_gerar_lotes():
         row = conn.execute("SELECT MAX(CAST(lote AS INTEGER)) FROM contatos WHERE lote!=''").fetchone()
         proximo_lote = (row[0] or 0) + 1
         now = datetime.now().strftime("%d/%m/%Y %H:%M")
+        # Busca valores configurados (com fallback para os valores originais)
+        _cfg_ger = carregar_config()
+        _val_unit = _cfg_ger.get("valor_unitario", "R$ 20,00") or "R$ 20,00"
+        _val_lote = _cfg_ger.get("valor_lote", "") or ""
+        _qtd_lote = int(_cfg_ger.get("cartelas_por_lote", 10) or 10)
+        # Se valor_lote não configurado, calcula como valor_unitario * cartelas_por_lote
+        if not _val_lote:
+            try:
+                _vu = float(re.sub(r"[^\d,]", "", _val_unit).replace(",", "."))
+                _vl_num = _vu * _qtd_lote
+                _val_lote = f"R$ {_vl_num:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            except:
+                _val_lote = "R$ 200,00"
         ids_gerados = []
         if tipo == "unitaria":
             for c in range(cartela_inicio, cartela_fim + 1):
                 intervalo = f"{c:05d}"
                 cur = conn.execute(
                     "INSERT INTO contatos (lote, intervalo, vendedor, nome, telefone, whatsapp, valor, status, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                    (str(proximo_lote), intervalo, "", "", "", "", "R$ 20,00", "Disponivel", now, now)
+                    (str(proximo_lote), intervalo, "", "", "", "", _val_unit, "Disponivel", now, now)
                 )
                 ids_gerados.append(cur.lastrowid)
                 proximo_lote += 1
@@ -1581,15 +1594,15 @@ def api_gerar_lotes():
         else:
             c = cartela_inicio
             while c <= cartela_fim:
-                fim_lote = c + 9
+                fim_lote = c + (_qtd_lote - 1)
                 intervalo = f"{c:05d} a {fim_lote:05d}"
                 cur = conn.execute(
                     "INSERT INTO contatos (lote, intervalo, vendedor, nome, telefone, whatsapp, valor, status, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                    (str(proximo_lote), intervalo, "", "", "", "", "R$ 200,00", "Disponivel", now, now)
+                    (str(proximo_lote), intervalo, "", "", "", "", _val_lote, "Disponivel", now, now)
                 )
                 ids_gerados.append(cur.lastrowid)
                 proximo_lote += 1
-                c += 10
+                c += _qtd_lote
             registros_criados = len(ids_gerados)
         # Salvar historico da geracao para permitir desfazer
         import json as _json
@@ -2251,7 +2264,7 @@ def api_salvar_config():
     campos=["twilio_sid","twilio_numero","nome_evento","nome_organizador","chave_pix","telefone_contato",
             "data_sorteio","modo_envio","horario_envio","dia_semana","dia_mes","intervalo_min","intervalo_max",
             "limite_sessao","dias_disparo","usar_content_template","content_template_sid","url_publica",
-            "session_timeout_horas"]
+            "session_timeout_horas","valor_unitario","valor_lote","cartelas_por_lote"]
     for campo in campos:
         if campo in d: cfg[campo]=d[campo]
     if "twilio_token" in d and d["twilio_token"] and "****" not in str(d["twilio_token"]):
@@ -2939,12 +2952,29 @@ def api_resumo():
             return float(s)
         except: return 0.0
     def valor_padrao(v, intervalo):
-        """Retorna valor numerico; se mal formatado, infere pelo tipo do registro."""
+        """Retorna valor numerico; se mal formatado, infere pelo tipo do registro via config."""
         parsed = parse_valor(v)
         if parsed > 0:
             return parsed
-        # Valor ausente/invalido: infere pelo intervalo (lote real tem " a ", unitaria nao)
-        return 200.0 if " a " in (intervalo or "") else 20.0
+        # Valor ausente/invalido: infere pelos valores configurados
+        _cfg_vp = carregar_config()
+        try:
+            _vu = float(re.sub(r"[^\d,]", "", _cfg_vp.get("valor_unitario", "20,00") or "20,00").replace(",", "."))
+        except:
+            _vu = 20.0
+        try:
+            _qtd = int(_cfg_vp.get("cartelas_por_lote", 10) or 10)
+        except:
+            _qtd = 10
+        _vl_cfg = _cfg_vp.get("valor_lote", "")
+        if _vl_cfg:
+            try:
+                _vl = float(re.sub(r"[^\d,]", "", _vl_cfg).replace(",", "."))
+            except:
+                _vl = _vu * _qtd
+        else:
+            _vl = _vu * _qtd
+        return _vl if " a " in (intervalo or "") else _vu
     with get_db() as conn:
         # Lotes reais = intervalo contém " a " (ex: "00001 a 00010")
         # Cartelas unitárias = intervalo sem " a " (geradas via tipo=unitaria ou desmembradas)
