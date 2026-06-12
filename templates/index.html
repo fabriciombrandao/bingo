@@ -1270,6 +1270,25 @@ function tocarSomAlerta() {
       <input type="text" id="cfg-telefone-contato" placeholder="(63) 99999-8888">
       <label style="margin-top:10px;">Data do Sorteio</label>
       <input type="text" id="cfg-data-sorteio" placeholder="05/04/2026">
+      <div style="border-top:1px solid var(--border);margin:14px 0 10px;"></div>
+      <div style="font-weight:600;font-size:0.8rem;margin-bottom:10px;color:var(--accent);">💰 Valores</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div>
+          <label>Valor Unitário</label>
+          <input type="text" id="cfg-valor-unitario" placeholder="R$ 20,00">
+        </div>
+        <div>
+          <label>Cartelas por Lote</label>
+          <input type="number" id="cfg-cartelas-por-lote" min="1" placeholder="10">
+        </div>
+        <div>
+          <label>Valor do Lote</label>
+          <input type="text" id="cfg-valor-lote" placeholder="Calculado automaticamente">
+        </div>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:6px;">
+        💡 Se <b>Valor do Lote</b> ficar vazio, é calculado como <b>Valor Unitário × Cartelas por Lote</b>.
+      </div>
     </div>
 
     <div id="aba-planilha" style="display:none;">
@@ -1330,26 +1349,6 @@ function tocarSomAlerta() {
       </div>
     </div>
 
-    <div class="cfg-bloco" style="margin-top:14px;">
-      <div style="font-weight:600;font-size:0.8rem;margin-bottom:10px;color:var(--accent);">💰 Valores das Cartelas / Rifas</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-        <div>
-          <label>Valor Unitário</label>
-          <input type="text" id="cfg-valor-unitario" placeholder="R$ 20,00">
-        </div>
-        <div>
-          <label>Cartelas por Lote</label>
-          <input type="number" id="cfg-cartelas-por-lote" min="1" placeholder="10">
-        </div>
-        <div>
-          <label>Valor do Lote</label>
-          <input type="text" id="cfg-valor-lote" placeholder="Calculado automaticamente">
-        </div>
-      </div>
-      <div style="font-size:0.72rem;color:var(--text3);margin-top:6px;">
-        💡 Se <b>Valor do Lote</b> ficar vazio, é calculado automaticamente como <b>Valor Unitário × Cartelas por Lote</b>.
-      </div>
-    </div>
 
 
     <div id="aba-senha" style="display:none;">
