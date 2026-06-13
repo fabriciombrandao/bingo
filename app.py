@@ -5165,7 +5165,7 @@ if __name__ == "__main__":
     except: pass
     threading.Thread(target=run_scheduler, daemon=True).start()
     log("Bingo v2.6.0 iniciado!","success")
-    app.run(host="0.0.0.0", port=60080, debug=False, threaded=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 60083)), debug=False, threaded=True)
 else:
     _init_db_status = ""
     init_db()
